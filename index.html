@@ -47,7 +47,7 @@ th,td{text-align:right;padding:2px 5px}th:first-child,td:first-child{text-align:
 .modal{position:fixed;inset:0;background:rgba(10,16,14,.9);z-index:8;display:flex;align-items:center;justify-content:center;padding:12px}.modal.hide{display:none}.mc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;max-width:1100px;width:100%;max-height:96vh;overflow:auto}.mh{display:flex;gap:14px;align-items:baseline;flex-wrap:wrap}
 .mg{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:14px;margin-top:8px}#pbook{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;align-content:start}.pcol h3{font:700 15px 'Barlow Condensed',sans-serif;margin:0 0 4px;color:var(--dim)}.pcol .pb{display:block;width:100%;margin-bottom:4px;text-align:left;font-size:12px}.pb.on{background:var(--chalk);color:var(--bg)}
 #pc{width:100%;display:block;border-radius:8px;border:1px solid var(--line)}.rad{display:block;margin:2px 0;color:var(--chalk)}.rad em{color:var(--dim);font-style:normal}@media(max-width:820px){.mg{grid-template-columns:1fr}}
-</style>
+#side3{max-height:440px;overflow:auto}#scoutCard{padding:4px 0 10px}</style>
 </head>
 <body>
 <div id="start" role="dialog" aria-label="Season"><div class="card"><h1>Clipboard</h1><div class="dim">Coach a real roster through an 82-game schedule.</div><label>Your team</label><select id="selMe"></select><label>Difficulty</label><select id="selDiff"></select><p id="contInfo" class="dim"></p><div class="bar"><button id="goNew" style="background:var(--gold);color:#16221e;border-color:var(--gold)">New season</button><button id="goCont">Continue season</button></div></div></div>
@@ -73,7 +73,7 @@ th,td{text-align:right;padding:2px 5px}th:first-child,td:first-child{text-align:
 </main>
 <aside>
  <section class="card">
-  <div class="bar" style="margin-bottom:8px"><button data-side="0" class="on">On-court box score</button><button data-side="1">Game plan</button><button data-side="2">Opponent subs</button></div>
+  <div class="bar" style="margin-bottom:8px"><button data-side="0" class="on">On-court box score</button><button data-side="1">Game plan</button><button data-side="2">Opponent subs</button><button data-side="3">Scouting</button></div>
   <div id="side0"><div id="courtbox"></div></div>
   <div id="side1" class="hide">
    <label>Offensive system</label><select id="style"></select>
@@ -86,6 +86,7 @@ th,td{text-align:right;padding:2px 5px}th:first-child,td:first-child{text-align:
    <label class="ck"><input type="checkbox" id="auto" checked> Auto-sub tired players</label>
   </div>
   <div id="side2" class="hide"><div class="dim" style="margin-bottom:6px">Opponent rotation (queued changes take effect at the next dead ball).</div><div class="rh"><span></span><span>Player</span><span>Energy</span><span>PF</span><span>Pts</span><span></span></div><div id="oppRot" class="rotl"></div></div>
+  <div id="side3" class="hide"><div class="dim" style="margin-bottom:6px">Estimated player attributes · ratings are gameplay estimates, not verified tracking data.</div><label>Player</label><select id="scoutPlayer"></select><div id="scoutCard"></div></div>
  </section>
  <section class="card"><h2>Assistant coach</h2><ul id="tips"></ul></section>
 </aside>
@@ -153,12 +154,21 @@ const POSO={PG:0,SG:1,SF:2,PF:3,C:4},cN=(v,a,b)=>Math.max(a,Math.min(b,v));
 const DIFF={'Rookie':{user:.065,ai:-.04},'Semi-Pro':{user:.03,ai:-.02},'Pro':{user:0,ai:0},'All-Star':{user:-.02,ai:.02},'Superstar':{user:-.04,ai:.04},'Hall of Fame':{user:-.06,ai:.06}};
 const SEL={me:'BOS',opp:'LAL',diff:'Pro'};
 const initials=n=>n.replace(/[^A-Za-z .'’-]/g,'').split(/[ .]+/).filter(w=>w&&!/^(Jr|II|III|IV)$/i.test(w)).map(w=>w[0]).join('').slice(0,2).toUpperCase();
+// Attribute profiles are gameplay estimates derived from OVR, position, and role—not verified tracking measurements.
+const ATTR_CONFIDENCE='Estimated gameplay ratings; not player-tracking measurements';
+function makeAttrs(n,pos,ovr){
+ const base={PG:{speed:82,accel:84,agility:84,strength:57,vertical:66,stamina:82,iq:76,hustle:74,anticipation:75,handle:84,finish:72,perimeter:68,interior:40,screen:68,oreb:42,dreb:48,loose:74},SG:{speed:80,accel:81,agility:80,strength:63,vertical:72,stamina:81,iq:70,hustle:76,anticipation:72,handle:76,finish:75,perimeter:72,interior:45,screen:68,oreb:48,dreb:53,loose:76},SF:{speed:75,accel:74,agility:74,strength:70,vertical:72,stamina:80,iq:71,hustle:78,anticipation:73,handle:70,finish:75,perimeter:70,interior:57,screen:72,oreb:58,dreb:63,loose:78},PF:{speed:67,accel:65,agility:63,strength:82,vertical:75,stamina:78,iq:72,hustle:81,anticipation:75,handle:60,finish:79,perimeter:59,interior:72,screen:81,oreb:76,dreb:79,loose:80},C:{speed:59,accel:56,agility:55,strength:88,vertical:76,stamina:75,iq:73,hustle:79,anticipation:77,handle:49,finish:80,perimeter:45,interior:83,screen:85,oreb:83,dreb:86,loose:78}};
+ const b=base[pos]||base.SF,delta=ovr-76,seed=[...n].reduce((a,c)=>a+c.charCodeAt(0),0),j=(seed%9)-4, out={};
+ Object.keys(b).forEach(k=>{let v=b[k]+delta*.48+j*.7;if(['iq','anticipation','hustle','stamina','loose'].includes(k))v+=delta*.12;out[k]=Math.round(cN(v,35,99))});
+ const elite={"Nikola Jokic":{iq:98,anticipation:96,handle:78,oreb:88,dreb:94},"Stephen Curry":{speed:87,accel:91,handle:98,iq:94,perimeter:62},"Victor Wembanyama":{speed:76,agility:77,vertical:94,interior:98,dreb:92,iq:86},"Giannis Antetokounmpo":{speed:88,accel:90,strength:91,vertical:94,finish:96},"LeBron James":{speed:78,iq:97,handle:91,finish:91,strength:84},"Rudy Gobert":{interior:96,dreb:94,oreb:84,strength:88},"Shai Gilgeous-Alexander":{handle:96,iq:94,finish:91,agility:91},"Anthony Edwards":{speed:91,accel:92,vertical:94,strength:82,finish:88},"Jalen Brunson":{iq:94,handle:95,strength:74,finish:87},"Luka Doncic":{iq:98,handle:97,passing:96,strength:78}};
+ Object.assign(out,elite[n]||{});return out;
+}
 function mkPlayer(n,pos,ovr){
  /* attribute formulas below are the supplied file's own makeTeams() derivations from OVR + position */
  const o=ovr,f=(m,lo,hi)=>cN(o+(m[pos]||0),lo,hi),three=cN(o-({PG:1,SG:0,SF:2,PF:7,C:13}[pos]||4),35,99),
   def=cN(o-(pos==='C'||pos==='PF'?0:3),45,99),speed=f({PG:5,SG:3,SF:0,PF:-3,C:-7},40,99),strength=f({PG:-8,SG:-4,SF:0,PF:7,C:10},40,99),
   steal=f({PG:2,SG:2,SF:0,PF:-3,C:-7},35,99),block=f({PG:-18,SG:-12,SF:-5,PF:4,C:12},20,99),rebound=f({PG:-15,SG:-10,SF:-3,PF:8,C:13},25,99);
- return{n,pos,ovr:o,s3:three,mid:Math.min(99,o),def,reb:rebound,
+ return{n,pos,ovr:o,attr:makeAttrs(n,pos,o),attrSource:ATTR_CONFIDENCE,s3:three,mid:Math.min(99,o),def,reb:rebound,
   fin:f({PG:-2,SG:-2,SF:0,PF:3,C:6},40,99),pas:f({PG:6,SG:0,SF:-1,PF:-5,C:-9},35,99),sta:Math.round(70+(o-70)*.3), /* fin/pas/sta: derived here, not in the supplied file */
   spd:9+speed*.12,str:strength,blkR:50+(block-62)*1.3,stlR:steal,num:initials(n),
   en:100,pf:0,pts:0,rb:0,as:0,min:0,fg:0,fa:0,tm:0,ta:0,ftm:0,fta:0,stl:0,blk:0,to:0}}
@@ -318,10 +328,10 @@ function shotType(t,x,y){const Ht=hoop(t),d=hyp(x-Ht.x,y-Ht.y),cor=Math.abs(y-25
 function shotP(t,s,ty,op,nd,dist){
  const P=pl(t,s),O=T[t],dp=pl(1-t,nd.s),sk=ty==='three'?P.s3:ty==='mid'?P.mid:P.fin;
  let p={three:.355,mid:.43,rim:.56}[ty]+(sk*(.85+.15*P.en/100)-({three:74,mid:80,rim:80}[ty]))*.0055-(dp.def*(.85+.15*dp.en/100)-78)*.0035+(op-.5)*.17-(O.tempo-3)*.003+(P.hot||0)*.01+(ty==='rim'?(P.spd-dp.spd)*.001:(P.spd-dp.spd)*.002);
- if(O.shotprofile==='rim')p+=ty==='rim'?.045:ty==='three'?-.025:0;if(O.shotprofile==='mid')p+=ty==='mid'?.045:ty==='rim'?-.015:ty==='three'?-.02:0;if(O.shotprofile==='three')p+=ty==='three'?.04:ty==='rim'?-.015:0;if(O.gameplan==='attack')p+=ty==='rim'?.045:0;if(O.gameplan==='perimeter')p+=ty==='three'?.035:0;if(O.gameplan==='star'&&s===O.on.slice().sort((a,b)=>O.pl[b].ovr-O.pl[a].ovr)[0])p+=.035;if(O.gameplan==='protect')p+=ty==='mid'?.015:ty==='three'?-.015:0;if(O.gameplan==='comeback')p+=ty==='three'?.025:0;if(ty==='rim')p+=(P.str-dp.str)*.0008;if(dist>30)p*=.4;p+=-.005+(t===0?DIFF[SEL.diff].user:DIFF[SEL.diff].ai);return cl(p,.04,.78)}
-function laneRisk(t,x1,y1,x2,y2){let r=0;const L=hyp(x2-x1,y2-y1)||1;A[1-t].forEach(d=>{const f=cl(((d.x-x1)*(x2-x1)+(d.y-y1)*(y2-y1))/(L*L),0,1),k=hyp(d.x-(x1+f*(x2-x1)),d.y-(y1+f*(y2-y1)));if(k<3)r+=(1-k/3)*.5});return Math.min(r,.9)}
+ if(O.shotprofile==='rim')p+=ty==='rim'?.045:ty==='three'?-.025:0;if(O.shotprofile==='mid')p+=ty==='mid'?.045:ty==='rim'?-.015:ty==='three'?-.02:0;if(O.shotprofile==='three')p+=ty==='three'?.04:ty==='rim'?-.015:0;if(O.gameplan==='attack')p+=ty==='rim'?.045:0;if(O.gameplan==='perimeter')p+=ty==='three'?.035:0;if(O.gameplan==='star'&&s===O.on.slice().sort((a,b)=>O.pl[b].ovr-O.pl[a].ovr)[0])p+=.035;if(O.gameplan==='protect')p+=ty==='mid'?.015:ty==='three'?-.015:0;if(O.gameplan==='comeback')p+=ty==='three'?.025:0;if(ty==='rim')p+=(P.str-dp.str)*.0008+(P.attr.finish-dp.attr.interior)*.0009+(P.attr.strength-dp.attr.strength)*.00045; p+=(P.attr.iq-75)*.00035+(P.attr.handle-dp.attr.perimeter)*.00025-(dp.attr.iq-75)*.00015;if(dist>30)p*=.4;p+=-.005+(t===0?DIFF[SEL.diff].user:DIFF[SEL.diff].ai);return cl(p,.04,.78)}
+function laneRisk(t,x1,y1,x2,y2){let r=0;const L=hyp(x2-x1,y2-y1)||1;A[1-t].forEach(d=>{const f=cl(((d.x-x1)*(x2-x1)+(d.y-y1)*(y2-y1))/(L*L),0,1),k=hyp(d.x-(x1+f*(x2-x1)),d.y-(y1+f*(y2-y1)));if(k<3)r+=(1-k/3)*(.32+pl(d.t,d.s).attr.anticipation/180+pl(d.t,d.s).attr.perimeter/260)});return Math.min(r,.9)}
 function evShot(t,s,x,y){const [ty,dist]=shotType(t,x,y),[nd]=nearD(t,x,y),op=openF(t,x,y),p=shotP(t,s,ty,op,nd,dist);return{ty,dist,p,v:p*(ty==='three'?3:2)}}
-function mmVal(t,slot){const d=A[1-t][G.dm.indexOf(slot)],Pd=pl(1-t,d.s),Po=pl(t,slot);return cl(Math.max((Po.spd-Pd.spd)*.1,(Po.str-Pd.str)/45*(POSO[Po.pos]>=3?1:.3)),0,.6)}
+function mmVal(t,slot){const d=A[1-t][G.dm.indexOf(slot)],Pd=pl(1-t,d.s),Po=pl(t,slot);return cl(Math.max((Po.spd-Pd.spd)*.1,(Po.attr.speed-Pd.attr.speed)*.012,(Po.str-Pd.str)/45*(POSO[Po.pos]>=3?1:.3),(Po.attr.strength-Pd.attr.strength)/60*(POSO[Po.pos]>=3?1:.25)),0,.6)}
 function decide(a,opt){
  opt=opt||{};const t=a.t,s=a.s,O=T[t],S=O.style,Ht=hoop(t),du=hyp(a.x-Ht.x,a.y-Ht.y),P=pl(t,s),c=G.c24,dbl=G.dbl>=0||!!opt.trap;
  const urg=cl((20-c)/16,0,1)+(O.tempo-3)*.05,minT=[22,20,17,14,11][O.tempo-1],thr=(opt.bc?.7:1.05-.5*urg-(G.putback?.3:0)-(opt.iso?.08:0)),canShoot=!opt.bc&&!opt.trap&&(G.putback||G.fcT>=minT||c<4||opt.iso||opt.pull);
@@ -400,7 +410,7 @@ function rebound(){
  let c=all.filter(a=>hyp(a.x-L.x,a.y-L.y)<(long?20:9));
  if(!long)c=c.filter(a=>hyp(a.x-H.x,a.y-25)<25||hyp(a.x-L.x,a.y-L.y)<5);
  if(!c.length)c=all.slice().sort((a,b)=>hyp(a.x-L.x,a.y-L.y)-hyp(b.x-L.x,b.y-L.y)).slice(0,4);
- const w=c.map(a=>{const p=pl(a.t,a.s),dd=hyp(a.x-L.x,a.y-L.y),rim=hyp(a.x-H.x,a.y-25),leak=(a.t===t&&a.s<3&&rim>17&&!long)?.48:1;return Math.pow(p.reb,2)*(.35+p.str/150)*leak/Math.pow(dd+1,1.35)*(a.t===t?.92:1.12)}),a=c[wp(w)],p=pl(a.t,a.s),off=a.t===t;
+ const w=c.map(a=>{const p=pl(a.t,a.s),dd=hyp(a.x-L.x,a.y-L.y),rim=hyp(a.x-H.x,a.y-25),leak=(a.t===t&&a.s<3&&rim>17&&!long)?.48:1;return Math.pow(p.reb,1.6)*(.28+p.str/170)*(0.72+p.attr.vertical/180+p.attr.iq/260+p.attr.hustle/300)*leak/Math.pow(dd+1,1.35)*(a.t===t?.92:1.12)}),a=c[wp(w)],p=pl(a.t,a.s),off=a.t===t;
  p.rb++;log(`${p.n} secures the ${off?'offensive ':''}rebound (${T[a.t].short}${long?', long rebound':''})`);takeBall(a.t,a.s,off?'orb':'def')}
 
 /* ---------- agents ---------- */
@@ -443,14 +453,17 @@ function defT(a){
  if(D.def==='press'&&back&&foc&&!isF){const ds=G.dm.indexOf(foc.s);if(a.s===(ds+1)%5)return{x:foc.x+(H.x-foc.x)*.06,y:foc.y+(25-foc.y)*.06,sp:1}}
  const k=hyp(H.x-o.x,H.y-o.y)||1,ux=(H.x-o.x)/k,uy=(H.y-o.y)/k,pr=D.on.reduce((b,pi,i)=>D.pl[pi].blkR>D.pl[D.on[b]].blkR?i:b,0);
  if(a.s===pr&&!isF&&k>12&&!(G.dbl>=0))return{x:H.x-dir*7,y:25+((foc?foc.y:25)-25)*.25,sp:.85};
- let x=o.x+ux*(isF?2.7:(k>15?5:3.6)),y=o.y+uy*(isF?2.7:(k>15?5:3.6));
+ const pickup=cl(25+(D.gam/100)*10,25,36); let x=o.x+ux*(isF?2.7:(k>15?5:3.6)),y=o.y+uy*(isF?2.7:(k>15?5:3.6)); if(isF){const da=pl(d,a.s).attr;x+=ux*((75-da.perimeter)/100)*1.3;y+=uy*((75-da.agility)/100)*1.1;}
  if(!isF&&foc){const wk=Math.abs(o.y-25)>7&&Math.sign(o.y-25)!==Math.sign(foc.y-25)&&k>8,far=hyp(o.x-foc.x,o.y-foc.y),w=D.gam/100*.45*cl((far-8)/16,0,1)+(wk?.28+D.gam/100*.25:0);x+=(H.x-dir*8-x)*w;y+=(25+(o.y-25)*.3-y)*w}
- if(D.def!=='press'){if(Math.abs(H.x-x)>44)x=H.x-dir*44;if(isF&&back){x=H.x-dir*42;y=foc.y}}
+ if(D.def!=='press'){if(Math.abs(H.x-x)>44)x=H.x-dir*44;
+  // Normal man coverage shades toward the three-point area instead of waiting at half court.
+  if(isF&&back){const pressure=D.gam/100,desired=cl(25+pressure*10,25,36);x=H.x-dir*desired;y=cl(foc.y+(25-foc.y)*.10,7,43);}
+ }
  return{x,y,sp:isF?1:.93}}
 function rebT(a){const L=ball.L,P=pl(a.t,a.s),H=hoop(a.t),distR=hyp(a.x-H.x,a.y-25),bounce=hyp(L.x-H.x,L.y-25),distL=hyp(a.x-L.x,a.y-L.y);const crash=distR<18&&(P.reb>=52||a.s===4||a.s===3);if(a.t===G.off&&!crash&&bounce<15)return{...offSpot(a),sp:.92};if(distL>16&&bounce<15)return{...offSpot(a),sp:.9};return{x:L.x+(a.s-2)*.7,y:L.y+(a.t?1:-1)*.7,sp:distL>15?.9:1.05}}
 function tg(a){if((G.ph==='dead'||G.ph==='tip')&&G.tipPending)return{x:a.x,y:a.y,sp:.1};if(G.ph==='dead'&&G.ftShooter)return{x:a.x,y:a.y,sp:.1};return ball.st==='loose'?rebT(a):a.t===G.off?offT(a):defT(a)}
 function mv(a,tx,ty,dt,sp){
- const P=pl(a.t,a.s),carry=ball.st==='held'&&ball.ht===a.t&&ball.hs===a.s,mx=P.spd*(.72+.28*Math.min(1,P.en/55))*sp*(a.slow>0?.5:1)*(carry?.92:1),ac=30+(P.spd-17)*4.5;
+ const P=pl(a.t,a.s),carry=ball.st==='held'&&ball.ht===a.t&&ball.hs===a.s,mx=P.spd*(.72+.28*Math.min(1,P.en/55))*(.88+P.attr.speed/330)*sp*(a.slow>0?.5:1)*(carry?.92:1),ac=30+(P.spd-17)*4.5+P.attr.accel*.08;
  const dx=tx-a.x,dy=ty-a.y,d=hyp(dx,dy)||1e-6,w=Math.min(mx,d*4.5);let ax=dx/d*w-a.vx,ay=dy/d*w-a.vy;const m=hyp(ax,ay),l=ac*dt;if(m>l){ax*=l/m;ay*=l/m}
  a.vx+=ax;a.vy+=ay;const inbound=G.ph==='dead'&&G.inb===a.s&&G.off===a.t&&G.why==='made';a.x=cl(a.x+a.vx*dt,inbound?-2:.5,inbound?96:93.5);a.y=cl(a.y+a.vy*dt,.5,49.5);if(a.slow>0)a.slow-=dt}
 function moveAll(dt){if(G.ph==='tip'&&G.tipPending)return;const all=A.flat();all.forEach(a=>{const g=tg(a);mv(a,g.x,g.y,dt,g.sp)});
@@ -548,7 +561,7 @@ function draw(tm){
   if(hold){cx.lineWidth=.25;cx.strokeStyle='#fff';cx.beginPath();cx.arc(x,y,2.5,0,7);cx.stroke()}
   const sp=T[0].plan&&!ti?(T[0].plan.has(T[0].on[a.s])?0:1):0;if(sp){cx.lineWidth=.3;cx.setLineDash([.5,.4]);cx.strokeStyle='#ee5b45';cx.beginPath();cx.arc(x,y,2.8,0,7);cx.stroke();cx.setLineDash([])}
   if(sel!==null&&!ti&&sel===T[0].on[a.s]){cx.lineWidth=.35;cx.strokeStyle='#ffd23f';cx.beginPath();cx.arc(x,y,3.2,0,7);cx.stroke()}
-  cx.fillStyle='#fff';cx.font='700 1.7px "Barlow Condensed",sans-serif';cx.textAlign='center';cx.textBaseline='middle';cx.fillText(pl(ti,a.s).num,x,y+.1)}));
+  cx.fillStyle='#fff';cx.font='700 1.7px "Barlow Condensed",sans-serif';cx.textAlign='center';cx.textBaseline='middle';cx.fillText(pl(ti,a.s).num,x,y+.1);const pp=pl(ti,a.s);/* hover-free court labels; detailed estimates live in Scouting */}));
  const visual=G.ftVisual&&!G.ftVisual.done?G.ftVisual:null,bx=visual?visual.x:ball.x,by=visual?visual.y:ball.y,bz=visual?Math.sin(Math.min(1,visual.t/visual.dur)*Math.PI)*.5:(ball.st==='held'?Math.abs(Math.sin(tm*9))*.8:ball.z);
  cx.beginPath();cx.arc(bx,by-bz,.85+bz*.12,0,7);cx.fillStyle='#ff7a1a';cx.fill();cx.lineWidth=.15;cx.strokeStyle='#4a1c00';cx.stroke();
  if(flash&&flash.t>0&&flash.s){cx.globalAlpha=Math.min(1,flash.t*2);cx.fillStyle='#fff';cx.font='700 4px "Barlow Condensed",sans-serif';cx.fillText(flash.s,cl(flash.x,12,82),flash.y-(1.1-flash.t)*3);cx.globalAlpha=1}}
@@ -570,6 +583,8 @@ function buildOppRot(){const el=$('#oppRot');el.innerHTML='';T[1].pl.forEach((p,
 function updOppRot(){if(!T||!T[1]||!$('#oppRot').children.length)return;const t=T[1],plan=[...t.plan].sort((a,b)=>POSO[t.pl[a].pos]-POSO[t.pl[b].pos]||t.pl[b].ovr-t.pl[a].ovr),bench=t.pl.map((_,i)=>i).filter(i=>!t.plan.has(i)).sort((a,b)=>t.pl[b].ovr-t.pl[a].ovr);const place=(i,y)=>{const e=$(`#oppRot .r[data-i="${i}"]`),p=t.pl[i],on=t.on.includes(i),inP=t.plan.has(i);e.style.transform=`translateY(${y}px)`;e.className='r'+(oppSel===i?' sel':'')+(inP&&!on?' ent':'')+(!inP&&on?' lea':'')+(p.pf>=6?' out':'');e.children[0].textContent=p.pos;e.children[1].innerHTML=`${p.n}<em>${p.ovr}</em>`;const b=e.children[2].firstChild;b.style.width=p.en+'%';b.style.background=p.en<35?'#ee5b45':p.en<60?'#ffd23f':'#58c98b';e.children[3].textContent=p.pf;e.children[4].textContent=p.pts;e.children[5].textContent=inP&&!on?'IN':!inP&&on?'OUT':''};plan.forEach((i,k)=>place(i,k*ROW));bench.forEach((i,k)=>place(i,5*ROW+SEP+k*ROW))}
 function oppRowTap(i){const t=T[1];if(oppSel===null)oppSel=i;else if(oppSel===i)oppSel=null;else{const a=oppSel,b=i,pa=t.plan.has(a),pb=t.plan.has(b);if(pa!==pb){const out=pa?a:b,inn=pa?b:a;if(t.pl[inn].pf<6){t.plan.delete(out);t.plan.add(inn);if(G.ph==='dead')applyPlan(t)}oppSel=null}else oppSel=i}updOppRot()}
 
+function renderScouting(){const selEl=$('#scoutPlayer'),card=$('#scoutCard');if(!selEl||!card||!T)return;const all=T.flatMap((t,ti)=>t.pl.map((p,i)=>({p,ti,i,t})));const old=selEl.value;selEl.innerHTML=all.map(({p,ti,i,t})=>`<option value="${ti}:${i}">${t.short} · ${p.n} (${p.pos})</option>`).join('');if(old&&[...selEl.options].some(o=>o.value===old))selEl.value=old;const [ti,idx]=(selEl.value||'0:0').split(':').map(Number),p=T[ti].pl[idx],a=p.attr;const groups=[['Athleticism',[['Speed',a.speed],['Acceleration',a.accel],['Agility',a.agility],['Strength',a.strength],['Vertical',a.vertical],['Stamina',a.stamina]],],['IQ & effort',[['Basketball IQ',a.iq],['Anticipation',a.anticipation],['Hustle',a.hustle],['Loose-ball pursuit',a.loose]],],['Skills',[['Handle',a.handle],['Finishing',a.finish],['Perimeter defense',a.perimeter],['Interior defense',a.interior],['Screen navigation',a.screen],['Offensive rebounding',a.oreb],['Defensive rebounding',a.dreb]]]];card.innerHTML=`<div style="font-weight:700;margin:8px 0">${p.n} · ${p.pos} · OVR ${p.ovr}</div><div class="dim" style="font-size:11px;margin-bottom:8px">${p.attrSource}</div>`+groups.map(([name,rows])=>`<div style="font-size:12px;font-weight:700;margin:9px 0 4px">${name}</div>`+rows.map(([label,v])=>`<div style="display:grid;grid-template-columns:1fr 28px;gap:8px;margin:4px 0;font-size:11px"><span>${label}<span style="display:block;background:#25362f;height:4px;border-radius:4px;margin-top:3px"><i style="display:block;width:${v}%;height:4px;background:${v>=85?'#58c98b':v<60?'#e8a34a':'#a3b5aa'};border-radius:4px"></i></span></span><b style="text-align:right">${v}</b></div>`).join('')).join('');}
+$('#scoutPlayer')?.addEventListener('change',renderScouting);
 function ui(){
  T.forEach((t,i)=>{$(`#s${i} .nm`).textContent=t.name;const im=$(`#lg${i}`),u=`https://cdn.nba.com/logos/nba/${TEAM_IDS[t.code]}/global/L/logo.svg`;if(im.dataset.u!==u){im.dataset.u=u;im.style.display='';im.onerror=()=>{im.style.display='none'};im.src=u}});
  $('#who').textContent='You are the head coach of the '+T[0].name;$('#s0').style.borderColor=T[0].col;$('#s1').style.borderColor=T[1].col;
@@ -577,7 +592,7 @@ function ui(){
  $('#s1 .sub').textContent=`Runs ${ST[T[1].style].n}, ${DF[T[1].def].n}, ${TN[T[1].tempo-1].toLowerCase()}`;
  $('#tl').textContent=TN[T[0].tempo-1];$('#gl').textContent=T[0].gam<35?'Stay home':T[0].gam>65?'Help and gamble':'Balanced';
  updRot();$('#tips').innerHTML=tips.length?tips.map(x=>`<li>${x}</li>`).join(''):'<li class="dim">No advice yet.</li>';
- $('#tab').innerHTML=tab===1?box():tab===2?seasonHTML():logs.slice(0,16).map(x=>`<div>${x}</div>`).join('');$('#courtbox').innerHTML=courtBox();[0,1,2].forEach(i=>$('#side'+i).classList.toggle('hide',sideTab!==i));document.querySelectorAll('[data-side]').forEach(b=>b.classList.toggle('on',+b.dataset.side===sideTab));updOppRot();
+ $('#tab').innerHTML=tab===1?box():tab===2?seasonHTML():logs.slice(0,16).map(x=>`<div>${x}</div>`).join('');$('#courtbox').innerHTML=courtBox();[0,1,2,3].forEach(i=>$('#side'+i).classList.toggle('hide',sideTab!==i));renderScouting();document.querySelectorAll('[data-side]').forEach(b=>b.classList.toggle('on',+b.dataset.side===sideTab));updOppRot();
  $('#pp').textContent=paused?'Play':'Pause';$('#to').textContent=`Timeout (${T[0].to})`;
  document.querySelectorAll('[data-sp]').forEach(b=>b.classList.toggle('on',+b.dataset.sp===speed));
  document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('on',+b.dataset.tab===tab))}
