@@ -313,7 +313,11 @@ function drawPrev(tm){if(!TL||$('#playm').classList.contains('hide'))return;cons
 function makeScreen(t,a){
  const cands=A[t].filter(b=>b.s!==a.s&&!G.scrs.some(x=>x.s===b.s||x.f===b.s));if(!cands.length)return;
  const ballHandler=ball.st==='held'&&ball.ht===t&&ball.hs===a.s;
- const bigs=cands.slice().sort((x,y)=>pl(t,y.s).attr.screen-pl(t,x.s).attr.screen);
+ {const Hh=hoop(t),by=ball.st==='held'?A[t][ball.hs].y:25,weak=cands.map(b=>{const d=A[1-t][G.dm.indexOf(b.s)],sag=d?hyp(d.x-b.x,d.y-b.y):0,dTo=d?hyp(d.x-Hh.x,d.y-Hh.y):99,bTo=hyp(b.x-Hh.x,b.y-Hh.y);return{b,d,sag,dTo,bTo,ok:d&&(b.y-25)*(by-25)<0&&Math.abs(b.y-25)>8&&sag>=5&&dTo<bTo-1.5}}).filter(x=>x.ok).sort((x,y)=>y.sag-x.sag)[0];
+ const scr=weak&&cands.filter(b=>b.s!==weak.b.s).sort((x,y)=>pl(t,y.s).attr.screen-pl(t,x.s).attr.screen)[0];
+ if(weak&&scr&&R()<.7){const sd=weak.b.y<25?-1:1,PW=pl(t,weak.b.s),deep=weak.dTo<13,pop=PW.s3>=68&&(deep||PW.attr.finish<75),type=pop?'flare':'cut',dest=pop?[24,sd*20]:[3,sd*2];
+  G.scrs.push({s:scr.s,f:weak.b.s,type,dest,t:0,auto:true,weak:true,vac:{x:weak.b.x,y:weak.b.y},action:pop?'weakside-pop':'weakside-cut'});log(`${T[t].short}: weakside screen for ${PW.n} — defender sagging, read: ${pop?'pop for the three':'cut to the rim'}`);return}}
+  const bigs=cands.slice().sort((x,y)=>pl(t,y.s).attr.screen-pl(t,x.s).attr.screen);
  // Make the offense actively create advantages: frequent high P&R, pick-and-pop, and off-ball screens.
  if(ballHandler&&bigs[0]&&R()<(T[t].style==='pnr'?.96:.84)){
   const screener=bigs[0],pop=pl(t,screener.s).s3>=68;
@@ -360,7 +364,7 @@ function poss(team,kind,spot,c24){
  G.spot=spot;G.inboundReceiver=null;G.inboundPending=kind==='made';let b=0,bd=1e9;A[team].forEach((a,s)=>{const k=hyp(a.x-spot.x,a.y-spot.y);if(k<bd){bd=k;b=s}});G.inb=b;
  if(G.inboundPending){const advanced=!!G.advanceInbound,insideX=advanced?47:(dir>0?4.1:89.9),insideY=advanced?45.4:25,recv=chooseInboundReceiver(team,b,insideX,insideY);if(recv){recv.x=insideX;recv.y=insideY+(recv.y<25?-1.2:1.2);recv.vx=recv.vy=0;recv.inboundLock=0;recv.inboundTarget={x:recv.x,y:recv.y};G.inboundReceiver=recv.s}}
  Object.assign(ball,{st:'held',ht:team,hs:b,tt:0,z:0})}
-function dead(why,secs,hold){
+function dead(why,secs,hold){secs+=(G.ftExtra||0);G.ftExtra=0;
  G.ph='dead';G.why=why;G.timer=secs;G.hold=!!hold;applySubs();const o=T[0];
  if(G.toQ){G.toQ=false;if(!FAST&&!hold&&o.to>0){o.to--;o.pl.forEach((p,i)=>{if(o.on.includes(i))p.en=Math.min(100,p.en+18)});run={t:-1,p:0};if(q>=4&&clock<=9&&G.spot){G.spot={x:47,y:49.5};G.advanceInbound=true;}G.hold=true;paused=true;G.toPend=true;log('Timeout, '+o.short+(q>=4&&clock<=9?' — advances the ball for a late-game possession':''));if(q>=4&&clock<=9&&Math.abs(T[0].sc-T[1].sc)>0){G.spot={x:47,y:49.5};G.advanceInbound=true}openPlays();return}}
  const lateGame=q>=4&&clock<=9&&Math.abs(T[0].sc-T[1].sc)>0,nextOff=why==='made'?1-G.off:G.off,stopRun=run.t===0&&run.p>=8,coldCpu=nextOff===1&&((G.lastCpuScoreClock||clock)-clock)>=100;if(T[1].to>0&&!G.hold&&nextOff===1&&(lateGame||stopRun||coldCpu)&&(!FAST||lateGame)){G.cpuTimeoutPending=true;G.cpuTimeoutLate=lateGame;G.timer=5;run={t:-1,p:0};log(`Timeout, ${T[1].short}${lateGame?' — preparing a late-game advance':stopRun?' — stops the opponent scoring run':' — resets a cold offense'}`);AI()} }
@@ -452,7 +456,12 @@ function setFTLineup(t,s){
  defSlots.forEach((a,i)=>{const p=i<3?defLane[i]:defBack[i-3];a.x=p.x;a.y=p.y});
  ball.st='held';ball.ht=t;ball.hs=s;ball.x=line;ball.y=25;ball.z=0;G.ftShooter={t,s,line,y:25};G.ftVisual=null
 }
-function ftSeq(t,s,n){const P=pl(t,s);let mk=0,last=0;for(let k=0;k<n;k++){P.fta++;last=R()<(45+P.mid*.55)/100?1:0;if(last){P.ftm++;P.pts++;mk++}}T[t].sc+=mk;if(mk){if(run.t===t)run.p+=mk;else run={t,p:mk}}const H=hoop(t),line=G.ftShooter?G.ftShooter.line:(H.x<47?19:75);G.ftVisual={t:0,dur:.78,x:line,y:25,fx:line,fy:25,tx:H.x,ty:25,make:!!last,done:false};return[mk,last]}
+function ftSeq(t,s,n){const P=pl(t,s),res=[];for(let k=0;k<n;k++)res.push(R()<(45+P.mid*.55)/100?1:0);
+ G.ftQ=(G.ftQ||[]).concat(res.map((m,k)=>({t,s,m,k,n,at:.35+k*1.25})));G.ftClock=0;G.ftExtra=Math.max(G.ftExtra||0,n*1.25-1.5);
+ return[res.reduce((x,y)=>x+y,0),res[n-1]]}
+function ftTick(dt){if(!G.ftQ||!G.ftQ.length)return;G.ftClock+=dt;while(G.ftQ.length&&G.ftClock>=G.ftQ[0].at){const q=G.ftQ.shift(),P=pl(q.t,q.s),H=hoop(q.t),line=G.ftShooter?G.ftShooter.line:(H.x<47?19:75);
+  P.fta++;if(q.m){P.ftm++;P.pts++;T[q.t].sc++;if(run.t===q.t)run.p++;else run={t:q.t,p:1}}
+  G.ftVisual={t:0,dur:.78,x:line,y:25,fx:line,fy:25,tx:H.x,ty:25,make:!!q.m,done:false};log(`${P.n} free throw ${q.k+1} of ${q.n}: ${q.m?'good':'missed'}`)}}
 function shootFoul(a,ty,nd,p){
  const t=a.t,P=pl(t,a.s),fd=pl(1-t,nd.s),n=ty==='three'?3:2;setFTLineup(t,a.s);fd.pf++;T[1-t].pf++;
  const and1=R()<p*.6;let mk=0,last;
@@ -498,6 +507,7 @@ function offT(a){
  if(cutScreen&&!hold)return{...U(cutScreen.dest[0],cutScreen.dest[1]),sp:1.08};
  const my=G.scrs.find(x=>x.s===s&&x.t<1.5);
  if(my){const hs=A[t][my.f],ds=A[1-t][G.dm.indexOf(my.f)];return{x:hs.x+(ds.x-hs.x)*.7,y:hs.y+(ds.y-hs.y)*.7,sp:1}}
+ const wv=G.scrs.find(x=>x.s===s&&x.weak&&x.t>=1.1&&x.t<3.4);if(wv&&!hold)return{x:wv.vac.x,y:wv.vac.y,sp:1};
  const sb=G.scrs.find(x=>x.s===s&&x.t>=1.5&&x.t<3.4&&x.type==='ball');
  if(sb&&!hold){const F=A[t][sb.f],pop=pl(t,s).s3>=72;return pop?{...U(24,(F.y<25?1:-1)*11),sp:1}:{...U(7,(F.y<25?-1:1)*3),sp:1}}
  const sf=G.scrs.find(x=>x.f===s&&x.dest&&x.t<3.4);
@@ -629,7 +639,7 @@ function offenseAI(dt){
  if(a.dec<=0){const o={pull:a.pull,feed:a.feed,trap:a.trap};a.pull=a.feed=a.trap=undefined;decide(a,o)}}
 function step(dt){
  if(over)return;
- if(G.ftVisual){const V=G.ftVisual;V.t+=dt;const f=cl(V.t/V.dur,0,1);V.x=V.fx+(V.tx-V.fx)*f;V.y=V.fy+(V.ty-V.fy)*f-Math.sin(f*Math.PI)*5;if(f>=1)V.done=true}
+ ftTick(dt);if(G.ftVisual){const V=G.ftVisual;V.t+=dt;const f=cl(V.t/V.dur,0,1);V.x=V.fx+(V.tx-V.fx)*f;V.y=V.fy+(V.ty-V.fy)*f-Math.sin(f*Math.PI)*5;if(f>=1)V.done=true}
  if(G.ph==='tip'){ballStep(dt);moveAll(dt);return}
  if(G.ph==='dead'){if(!G.hold){G.timer-=dt;if(G.timer<=0)live()}moveAll(dt);ballStep(dt);return}
  clock-=dt;fat(dt);G.apT=(G.apT||0)+dt;if(G.apT>2){G.apT=0;if(T[0].auto)autoPlan(T[0]);fixPlan(T[0])}
