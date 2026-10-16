@@ -359,7 +359,7 @@ function chooseInboundReceiver(team, excludeS, x, y){
 /* ---------- possession / dead ball ---------- */
 function poss(team,kind,spot,c24){
  const previousOff=G.off,previousClock=Number.isFinite(G.c24)?G.c24:24;const sameTeam=previousOff===team;const nextClock=sameTeam?(kind==='orb'?14:(kind==='foul'?Math.min(previousClock,14):previousClock)):(Number.isFinite(c24)&&c24>0?c24:24);const dir=dirOf(team);Object.assign(G,{off:team,c24:nextClock,passes:0,lastPassFrom:-1,lastPassTo:-1,scrs:[],bcT:0,scrT:3+R()*3,dm:[0,1,2,3,4],as:[0,1,2,3,4],cutT:2+R()*2,putback:false,fb:false,fbGo:R()<[0,0,.05,.2,.4][T[team].tempo-1],fcT:0,scrDone:false,help:-1,astT:99,astS:-1,play:null,planned:false,dbl:-1,dblT:0,dblDone:false});
- A.flat().forEach(a=>{a.mode='';a.cut=null;a.slow=0;a.dec=.4;a.pt=0;a.under=0;a.inboundLock=0;a.inboundTarget=null});
+ G.crossed=false;A.flat().forEach(a=>{a.mode='';a.cut=null;a.slow=0;a.dec=.4;a.pt=0;a.under=0;a.inboundLock=0;a.inboundTarget=null});
  if(!spot)spot=kind==='made'?{x:dir>0?-1.2:95.2,y:25}:{x:47-dir*8,y:kind==='q'?1:49};
  G.spot=spot;G.inboundReceiver=null;G.inboundPending=kind==='made';let b=0,bd=1e9;A[team].forEach((a,s)=>{const k=hyp(a.x-spot.x,a.y-spot.y);if(k<bd){bd=k;b=s}});G.inb=b;
  if(G.inboundPending){const advanced=!!G.advanceInbound,insideX=advanced?47:(dir>0?4.1:89.9),insideY=advanced?45.4:25,recv=chooseInboundReceiver(team,b,insideX,insideY);if(recv){recv.x=insideX;recv.y=insideY+(recv.y<25?-1.2:1.2);recv.vx=recv.vy=0;recv.inboundLock=0;recv.inboundTarget={x:recv.x,y:recv.y};G.inboundReceiver=recv.s}}
@@ -425,8 +425,10 @@ function decide(a,opt){
  if(sh&&sh.v>=thr)return shoot(a);
  if(c<3.5&&!opt.bc&&!opt.trap)return shoot(a);
  a.wy=(R()-.5)*8;a.dec=.4+R()*.4}
+function backcourtViol(t,pi,why){const p=pl(t,pi),dir=dirOf(t);p.to++;log(`${p.n} — backcourt violation: ${why} (${T[t].short})`);flash={t:1.2,x:47,y:25,s:'Backcourt'};ball.st='dead';dead('backcourt violation',2.2,false);poss(1-t,'oob',{x:47,y:A[t][pi].y<25?.5:49.5})}
 function pairLoop(i,j){return (G.hist||[]).slice(-4).filter(p=>p===i+'>'+j||p===j+'>'+i).length}
-function pass(a,rs,safe){if(!G.passes)G.hist=[];G.hist=(G.hist||[]).concat(a.s+'>'+rs).slice(-6);
+function pass(a,rs,safe){if(G.crossed&&!G.inboundOutside&&Math.abs(A[a.t][rs].x-hoop(a.t).x)>47){a.dec=.25;return}
+ if(!G.passes)G.hist=[];G.hist=(G.hist||[]).concat(a.s+'>'+rs).slice(-6);
  const t=a.t,b=A[t][rs],L=hyp(b.x-a.x,b.y-a.y),openTarget=openF(t,b.x,b.y)>.72&&Math.min(...A[1-t].map(d=>hyp(d.x-b.x,d.y-b.y)))>5.5,dur=L/(openTarget?56:39)+(openTarget?.025:.075);let steal=null;
  A[1-t].forEach(d=>{const f=cl(((d.x-a.x)*(b.x-a.x)+(d.y-a.y)*(b.y-a.y))/(L*L),.2,.9),k=hyp(d.x-(a.x+f*(b.x-a.x)),d.y-(a.y+f*(b.y-a.y)));
   if(k<2.4){const p=.5*(1-k/2.4)*(pl(1-t,d.s).stlR/80)*(1+(T[1-t].gam-50)/100)*(T[1-t].def==='press'?1.25:1);if(R()<p*(safe?.04:.12)&&(!steal||f<steal.f))steal={s:d.s,f}}});
@@ -500,6 +502,7 @@ function rebRoles(t){const O=T[t],k={back1:1,bal2:2,crash3:3}[O.rebstrat];const 
 function offSpot(a){const S=ST[T[a.t].style],sp=S.sp[G.as[a.s]],H=hoop(a.t),d=dirOf(a.t);return{x:H.x-d*sp[0],y:25+sp[1]}}
 function offT(a){
  const t=a.t,s=a.s,H=hoop(t),dir=dirOf(t),S=ST[T[t].style],U=(u,v)=>({x:H.x-dir*u,y:25+v}),hold=ball.st==='held'&&ball.ht===t&&ball.hs===s,u=Math.abs(a.x-H.x),P=G.play;
+ if(G.ph==='dead'&&G.inboundPending&&a.t===G.off&&G.inboundReceiver===s){const ix=G.advanceInbound?47:(dirOf(a.t)>0?5.5:88.5);return{x:ix,y:a.inboundTarget?a.inboundTarget.y:25+(a.y<25?-1.5:1.5),sp:.5}}
  if(G.ph==='dead'&&G.inb===s)return{x:G.spot.x,y:G.spot.y,sp:.8};
  if((a.inboundLock||0)>0&&a.inboundTarget)return{x:a.inboundTarget.x,y:a.inboundTarget.y,sp:.25};
  if((a.pt||0)>(a.aw||1.8)&&!hold)return{x:a.x,y:25+(a.y<25?-1:1)*10.5,sp:1};
@@ -560,6 +563,7 @@ function moveAll(dt){if(G.ph==='tip'&&G.tipPending)return;const all=A.flat();all
 function fat(dt){T.forEach((t,ti)=>{const dd=G.off!==ti;t.pl.forEach((p,i)=>{if(t.on.includes(i)){p.en=Math.max(0,p.en-dt*.055*(.6+.2*t.tempo)*(1.6-p.sta/100)*(dd&&t.def==='press'?1.35:1));p.min+=dt/60}else p.en=Math.min(100,p.en+dt*.09)})})}
 function offenseAI(dt){
  const t=G.off,O=T[t],H=hoop(t),dir=dirOf(t);G.c24-=dt;G.astT+=dt;const fc=Math.abs(ball.x-H.x)<47;if(fc)G.fcT+=dt;else G.bcT+=dt;
+ {const hd=ball.st==='held'&&ball.ht===t&&G.ph==='live'&&!G.inboundOutside?A[t][ball.hs]:null;if(hd){const u_=Math.abs(hd.x-H.x);if(u_<44)G.crossed=true;else if(G.crossed&&u_>46.2){hd.x=H.x+(hd.x<H.x?-1:1)*46.2;hd.vx=0}}}
  A[t].forEach(b=>{if(b.cut)b.cut.t-=dt});A[1-t].forEach(d=>{if(d.under>0)d.under-=dt});
  G.scrs.forEach(sc=>{sc.t+=dt;if(!sc.sw&&sc.t>1.1){sc.sw=true;screenContact(sc)}});G.scrs=G.scrs.filter(sc=>sc.t<3.6);
  if(G.ph==='live')for(const b of A[t]){const inP=Math.abs(b.x-H.x)<19&&Math.abs(b.y-25)<8;
@@ -660,6 +664,7 @@ function ballStep(dt){
  else if(B.st==='pass'){B.tt+=dt;const r=A[G.off][B.rs],f=Math.min(1,B.tt/B.dur);B.x=B.fx+(r.x-B.fx)*f;B.y=B.fy+(r.y-B.fy)*f;B.z=Math.sin(f*Math.PI)*.35;
   if(B.steal&&B.tt>=B.dur*B.steal.f){const d=pl(1-G.off,B.steal.s),p=pl(G.off,B.fs);d.stl++;p.to++;log(`${d.n} steals it from ${p.n}`);flash={t:1,x:B.x,y:B.y,s:'Steal'};takeBall(1-G.off,B.steal.s,'steal');return}
   if(B.oob&&B.tt>=B.dur*.85){const p=pl(G.off,B.fs);p.to++;log(`${p.n} throws it out of bounds (${T[G.off].short})`);const sp={x:cl(B.x,4,90),y:B.y<25?.5:49.5},o=G.off;ball.st='dead';dead('out of bounds',2.2,false);poss(1-o,'oob',sp);return}
+  if(B.tt>=B.dur&&G.crossed&&Math.abs(A[G.off][B.rs].x-hoop(G.off).x)>49){return backcourtViol(G.off,B.rs,'received a pass in the backcourt after the ball crossed half court')}
   if(B.tt>=B.dur){const prev=B.fs;ball.st='held';ball.ht=G.off;ball.hs=B.rs;G.passes++;G.lastPassFrom=prev;G.lastPassTo=B.rs;G.astT=0;G.astS=prev;A[G.off][B.rs].dec=.04;A[G.off][B.rs].openFor=0;if(G.inboundReceiver===B.rs){A[G.off][B.rs].inboundLock=0;A[G.off][B.rs].inboundTarget=null;A[G.off][B.rs].mode='advance';A[G.off][B.rs].mt=1.2;G.inboundReceiver=null;G.bcT=0}}}
  else if(B.st==='shot'){B.tt+=dt;const f=Math.min(1,B.tt/B.dur),H=hoop(G.shotT);B.x=B.fx+(H.x-B.fx)*f;B.y=B.fy+(H.y-B.fy)*f;B.z=Math.sin(f*Math.PI)*(B.ty==='three'?2:1.4);if(B.tt>=B.dur)resolveShot()}
  else if(B.st==='loose'){B.tt+=dt;const f=Math.min(1,B.tt/.8);B.x=B.fx+(B.L.x-B.fx)*f;B.y=B.fy+(B.L.y-B.fy)*f;B.z=Math.sin(f*Math.PI)*.5;if(B.tt>=1.05)rebound()}
