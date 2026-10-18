@@ -345,6 +345,18 @@ th.srt{cursor:pointer;user-select:none;white-space:nowrap}th.srt:hover,th.srt:fo
 #liveLogPanel #liveLog{flex:1 1 auto;min-height:140px;max-height:none!important;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 #liveLogPanel #pbqBar{flex:0 0 auto;gap:4px;margin:2px 0 6px}#liveLogPanel #pbqBar button{padding:3px 10px;font-size:12px;min-width:36px}
 #liveLogPanel #debugLog{flex:0 0 auto}
+<style>
+/* ---- Hot streak system ---- */
+.hotb{display:inline-block;margin-left:6px;padding:0 6px;border-radius:9px;font:700 10px/16px Barlow,sans-serif;letter-spacing:.4px;color:#fff;vertical-align:middle;white-space:nowrap;text-transform:uppercase}
+.hotb.sm{margin:0 4px 0 3px;padding:0 5px;font-size:10px;line-height:14px}.nmw{display:flex;align-items:center;min-width:0}.nmw .nmt{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.nmw .hotb,.nmw em{flex:none}
+.hotb.h1{background:#c77a0a}.hotb.h2{background:#e0501b}.hotb.h3{background:#e0245e;box-shadow:0 0 8px rgba(255,46,99,.7);animation:hotp 1s infinite alternate}
+@keyframes hotp{from{filter:brightness(1)}to{filter:brightness(1.35)}}
+@media(prefers-reduced-motion:reduce){.hotb.h3{animation:none}}
+.hot-t{width:100%;font-size:12px}.hot-t th.l,.hot-t td.l{text-align:left}.hot-t td,.hot-t th{padding:3px 4px}
+.hotcfg{max-width:640px;margin-top:22px;display:grid;gap:6px}.hotcfg h3{margin:12px 0 2px;font-size:15px}
+.hotcfg .hr{display:grid;grid-template-columns:minmax(150px,200px) 1fr;gap:4px 10px;align-items:center;font-size:13px}.hotcfg .hr small{grid-column:2}
+.hotcfg .hc{display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center}.hotcfg .hl{color:var(--dim);font-size:11px}
+.hotcfg input[type=number]{width:64px;padding:4px;font-size:13px}.hot-out{white-space:pre-wrap;font-size:12px;background:#0f1815;border-radius:8px;padding:8px;max-height:340px;overflow:auto}
 </style>
 </head>
 <body>
@@ -521,7 +533,7 @@ function mkPlayer(n,pos,ovr){
  const p={n,pos,ovr:o,attr:makeAttrs(n,pos,o),attrSource:'NBA 2K27 API attributes where available; derived gameplay fields otherwise',s3:three,mid:Math.min(99,o),def,reb:rebound,
   fin:f({PG:-2,SG:-2,SF:0,PF:3,C:6},40,99),pas:f({PG:6,SG:0,SF:-1,PF:-5,C:-9},35,99),sta:Math.round(70+(o-70)*.3),
   spd:9+speed*.12,str:strength,blkR:50+(block-62)*1.3,stlR:steal,num:initials(n),
-  en:100,pf:0,pts:0,rb:0,orb:0,drb:0,as:0,min:0,fg:0,fa:0,tm:0,ta:0,ftm:0,fta:0,stl:0,blk:0,to:0};
+  en:100,hs:0,hMax:0,hAtt:0,hMk:0,hUp:0,hCool:0,pf:0,pts:0,rb:0,orb:0,drb:0,as:0,min:0,fg:0,fa:0,tm:0,ta:0,ftm:0,fta:0,stl:0,blk:0,to:0};
  const a=API_PLAYER_DATA[n]?.attributes;
  if(a){
   const avg=(...v)=>Math.round(v.reduce((s,x)=>s+(Number.isFinite(x)?x:0),0)/v.length);
@@ -551,6 +563,195 @@ const qlong=()=>q>4?(q>5?ordw(q-4)+' Overtime':'Overtime'):ordw(q)+' Quarter';co
 const ql=()=>q>4?'OT'+(q>5?q-4:''):'Q'+q;
 const dirOf=t=>((q<=2||q>4)===(t===1-homeT()))?1:-1,hoop=t=>({x:dirOf(t)>0?88.75:5.25,y:25}),pl=(t,s)=>T[t].pl[T[t].on[s]];
 const nm=a=>pl(a.t,a.s).n;
+/* ===================== Hot Streak System =====================
+   Per-player consecutive-make tracking (P.hs). Level (0-3) is derived from the count and the configurable thresholds,
+   so changing a setting updates shooting modifiers and indicators immediately.
+   Rules: FG make +1 | FG miss or blocked shot = reset | fouled non-and-one attempt = no change | and-one make +1
+          FT make +1 (HOT.ftCounts) | FT miss = reset (HOT.ftMissResets) | quarter/OT: kept unless configured
+          new game = everything reset | timeouts roll against the streak (hotTimeout). */
+const HOT_KEY='hc_hotstreak_cfg_v1';
+const HOT_DEFAULTS={
+ enabled:true,
+ thresholds:[3,5,8],            // consecutive makes needed for level 1 / 2 / 3
+ boost:[.02,.04,.06],           // shot-success probability added at level 1 / 2 / 3
+ creep:.004,                    // extra boost per make beyond the level threshold
+ maxBoost:.08,                  // absolute cap on the boost
+ typeMult:{three:1,mid:1,rim:.7},  // rim finishes are less streaky than jumpers
+ ftFactor:.5,                   // free throws get this fraction of the boost
+ ftCounts:true,                 // a made free throw extends the streak
+ ftMissResets:true,             // a missed free throw ends it
+ blockResets:true,              // a blocked shot counts as a miss
+ resetOnQuarter:false,          // clear every streak at each new quarter
+ resetOnOvertime:false,         // clear every streak when an overtime starts
+ subOutReset:false,             // a hot player who goes to the bench loses the streak
+ timeout:{
+  chance:[.75,.5,.22],         // chance a timeout disturbs a streak of level 1 / 2 / 3
+  clearShare:[.8,.3,.05],      // when disturbed: chance the streak ends outright
+  reduceMin:[1,1,1],           // otherwise it loses this many makes (min..max)
+  reduceMax:[3,3,2],
+  ownFactor:.5,                // your own timeout disturbs your shooter less than an opposing timeout ("icing")
+  composure:.25,               // weight of the player's IQ (composure) in resisting the effect
+  coach:.15                    // weight of the calling team's pressure setting
+ },
+ ai:{minOpen:.55,maxRisk:.18,minValue:1,pass:[.12,.22,.34],self:[.02,.04,.06],selfOpen:.5}
+};
+const HOT_NAMES=['HOT','HOTTER','ON FIRE'],HOT_COL=['#ffb020','#ff6a1a','#ff2e63'];
+const hotClone=o=>JSON.parse(JSON.stringify(o));
+function hotMerge(base,src){if(!src||typeof src!=='object')return base;for(const k of Object.keys(base)){const b=base[k],s=src[k];if(s===undefined)continue;if(Array.isArray(b)){if(Array.isArray(s)&&s.length===b.length&&s.every(x=>typeof x==='number'&&isFinite(x)))base[k]=s.slice()}else if(b&&typeof b==='object')hotMerge(b,s);else if(typeof b==='boolean'){if(typeof s==='boolean')base[k]=s}else if(typeof b==='number'){if(typeof s==='number'&&isFinite(s))base[k]=s}}return base}
+function hotSanitize(c){const n=(v,lo,hi)=>Math.min(hi,Math.max(lo,v));
+ c.thresholds=c.thresholds.map(v=>Math.round(n(v,1,60)));for(let i=1;i<c.thresholds.length;i++)if(c.thresholds[i]<=c.thresholds[i-1])c.thresholds[i]=c.thresholds[i-1]+1;
+ c.boost=c.boost.map(v=>n(v,0,.3));c.creep=n(c.creep,0,.05);c.maxBoost=n(c.maxBoost,0,.3);['three','mid','rim'].forEach(k=>c.typeMult[k]=n(c.typeMult[k],0,2));c.ftFactor=n(c.ftFactor,0,2);
+ const o=c.timeout;o.chance=o.chance.map(v=>n(v,0,1));o.clearShare=o.clearShare.map(v=>n(v,0,1));o.reduceMin=o.reduceMin.map(v=>Math.round(n(v,0,30)));o.reduceMax=o.reduceMax.map((v,i)=>Math.max(o.reduceMin[i],Math.round(n(v,0,30))));o.ownFactor=n(o.ownFactor,0,2);o.composure=n(o.composure,0,1);o.coach=n(o.coach,0,1);
+ const a=c.ai;a.minOpen=n(a.minOpen,0,1);a.maxRisk=n(a.maxRisk,0,1);a.minValue=n(a.minValue,0,3);a.pass=a.pass.map(v=>n(v,0,1));a.self=a.self.map(v=>n(v,0,.5));a.selfOpen=n(a.selfOpen,0,1);return c}
+function hotLoad(){const c=hotClone(HOT_DEFAULTS);try{const s=JSON.parse(localStorage.getItem(HOT_KEY));if(s)hotMerge(c,s)}catch(e){}return hotSanitize(c)}
+function hotSave(){try{localStorage.setItem(HOT_KEY,JSON.stringify(HOT))}catch(e){}}
+let HOT=hotLoad();
+const hotLvlAt=n=>{if(!HOT.enabled)return 0;let l=0;for(let i=0;i<HOT.thresholds.length;i++)if(n>=HOT.thresholds[i])l=i+1;return l};
+const hotOf=P=>hotLvlAt(P.hs||0);
+function hotBoostAt(n,ty){const l=hotLvlAt(n);if(!l)return 0;const b=Math.min(HOT.maxBoost,HOT.boost[l-1]+HOT.creep*(n-HOT.thresholds[l-1]));return ty==='ft'?b*HOT.ftFactor:b*(HOT.typeMult[ty]??1)}
+const hotBoost=(P,ty)=>hotBoostAt(P.hs||0,ty);
+const hotNext=(n,made,kind)=>made?((kind==='ft'&&!HOT.ftCounts)?n:n+1):((kind==='ft'&&!HOT.ftMissResets)?n:0);
+function hotChange(t,P,b,a,quiet){
+ if(a===b)return;if(a>b&&b===0)P.hUp=(P.hUp||0)+1;if(quiet||!T||!T[t])return;const sh=T[t].short;
+ if(a>b){log(`${P.n} ${a===1?'is HOT':a===2?'is getting HOTTER':'is ON FIRE'} — ${P.hs} straight (${sh})`);
+  if(t===0)tip('hot'+P.n+a+q,`${P.n} is ${a===3?'on fire':'hot'} (${P.hs} straight). Keep feeding him while he is open.`);
+  else tip('hotO'+P.n+a+q,`${P.n} (${sh}) is hot with ${P.hs} straight. A timeout may cool him off.`)}
+ else log(a===0?`${P.n} cools off — hot streak over (${sh})`:`${P.n} cools to ${HOT_NAMES[a-1]} (${sh})`)}
+/* kind: 'fg' | 'ft'. Call once per resolved attempt (made or missed). */
+function hotShot(t,P,made,kind){
+ if(!HOT.enabled)return;const n0=P.hs||0,b=hotLvlAt(n0);
+ if(kind!=='ft'&&b>0){P.hAtt=(P.hAtt||0)+1;if(made)P.hMk=(P.hMk||0)+1}   // shots taken while hot
+ const n1=hotNext(n0,made,kind);P.hs=n1;if(n1>(P.hMax||0))P.hMax=n1;hotChange(t,P,b,hotLvlAt(n1))}
+function hotClear(t,P,why){const b=hotOf(P);P.hs=0;if(b>0&&why==='sub'&&T&&T[t])log(`${P.n} sits down and loses the hot streak (${T[t].short})`)}
+function hotResetAll(why){let any=false;(T||[]).forEach(tm=>tm.pl.forEach(p=>{if(hotOf(p)>0)any=true;p.hs=0;p.hm=0;if(why==='game'){p.hMax=0;p.hAtt=0;p.hMk=0;p.hUp=0;p.hCool=0}}));if(why==='period'&&any)log('Hot streaks reset for the new period')}
+function hotPeriod(){if(HOT.resetOnQuarter||(q>4&&HOT.resetOnOvertime))hotResetAll('period')}
+/* A timeout rolls against every hot player on the floor (both teams). Probability and size depend on streak level:
+   mild streaks are fragile, moderate ones may weaken/end/hold, extreme ones rarely vanish and mostly erode a little. */
+function hotTimeout(caller,opt){opt=opt||{};const rnd=opt.rng||R,out=[],o=HOT.timeout;if(!HOT.enabled||!T)return out;
+ T.forEach((tm,ti)=>tm.on.forEach(pi=>{const P=tm.pl[pi];if(!P||(opt.only&&opt.only!==P))return;const l=hotOf(P);if(!l)return;
+  const own=ti===caller,iq=(P.attr&&P.attr.iq)||75,gam=T[caller]&&T[caller].gam!=null?T[caller].gam:50;
+  let c=o.chance[l-1]*(own?o.ownFactor:1);c*=1-o.composure*cl((iq-75)/25,-1,1);if(!own)c*=1+o.coach*cl((gam-50)/50,-1,1);c=cl(c,0,1);
+  const n0=P.hs;let res='held';
+  if(rnd()<c){if(rnd()<o.clearShare[l-1]){P.hs=0;res='ended'}else{const k=o.reduceMin[l-1]+Math.floor(rnd()*(o.reduceMax[l-1]-o.reduceMin[l-1]+1));P.hs=Math.max(0,n0-k);const nl=hotLvlAt(P.hs);if(nl===0){P.hs=0;res='ended'}else res=nl<l?'weaker':(P.hs<n0?'trimmed':'held')}}
+  const nl=hotLvlAt(P.hs);if(res!=='held')P.hCool=(P.hCool||0)+1;
+  if(!opt.quiet){if(res==='ended'||res==='weaker')hotChange(ti,P,l,nl);else if(res==='trimmed')log(`${P.n} loses some rhythm in the timeout — ${P.hs} straight (${tm.short})`);else log(`${P.n} stays locked in through the timeout (${tm.short})`)}
+  out.push({P,ti,before:l,after:nl,from:n0,to:P.hs,res,chance:c})}));return out}
+function hotGameEnd(){if(!HOT.enabled||!T||!G||G.hotEnded)return;G.hotEnded=true;try{if(!SZ)return;const S=SZ.hot=SZ.hot||{};T.forEach(tm=>tm.pl.forEach(p=>{if(!(p.hUp>0))return;const r=S[p.n]=S[p.n]||{t:tm.code,g:0,best:0,up:0,att:0,mk:0};r.t=tm.code;r.g++;r.best=Math.max(r.best,p.hMax||0);r.up+=p.hUp||0;r.att+=p.hAtt||0;r.mk+=p.hMk||0}));saveSZ()}catch(e){console.error('Hot streak save failed',e)}}
+/* AI: favour an open, high-quality look for a hot teammate. Only fires for clean, open, good shots; never overrides the existing safety/quality gates. */
+function hotPassBonus(pb,e,op,risk,futureOp){const l=hotOf(pb);if(!l)return 0;const a=HOT.ai;return(op>=a.minOpen&&futureOp>=a.minOpen-.1&&risk<=a.maxRisk&&e.v>=a.minValue)?a.pass[l-1]:0}
+function hotSelfBonus(P,me,t,a){const l=hotOf(P);if(!l)return 0;const A_=HOT.ai;return(openF(t,a.x,a.y)>=A_.selfOpen&&me.v>=A_.minValue*.9)?A_.self[l-1]:0}
+/* ---- court indicator ---- */
+function hotFlame(cx,x,y,s,col){cx.beginPath();cx.moveTo(x,y-s);cx.bezierCurveTo(x+s*.15,y-s*.45,x+s*.85,y-s*.05,x+s*.7,y+s*.45);cx.bezierCurveTo(x+s*.55,y+s*.95,x-s*.55,y+s*.95,x-s*.7,y+s*.45);cx.bezierCurveTo(x-s*.85,y-s*.05,x-s*.2,y-s*.35,x,y-s);cx.closePath();cx.fillStyle=col;cx.fill()}
+function hotPill(cx,x,y,w,h,r){cx.beginPath();cx.moveTo(x+r,y);cx.arcTo(x+w,y,x+w,y+h,r);cx.arcTo(x+w,y+h,x,y+h,r);cx.arcTo(x,y+h,x,y,r);cx.arcTo(x,y,x+w,y,r);cx.closePath()}
+function hotDrawOne(cx,a,P,tm){const l=hotOf(P);if(!l)return false;const n=P.hs,col=HOT_COL[l-1],pulse=.5+.5*Math.sin(tm*(4+2*l)+a.s*1.3);
+ cx.save();cx.globalAlpha=.3+.5*pulse;cx.lineWidth=.3+.2*l;cx.strokeStyle=col;cx.beginPath();cx.arc(a.x,a.y,3.7+.25*l+.35*pulse,0,7);cx.stroke();
+ cx.globalAlpha=1;cx.font='700 1.6px "Barlow Condensed",sans-serif';cx.textAlign='left';cx.textBaseline='middle';
+ const tw=cx.measureText('HOT').width||4,nw=cx.measureText(String(n)).width||1.2,pad=.8,fl=l*1.25,w=pad+fl+tw+.7+nw+pad,h=2.6;
+ let px=cl(a.x-w/2,.8,93.2-w),py=a.y-7;if(py<.8)py=a.y+4.4;
+ hotPill(cx,px,py,w,h,1.1);cx.fillStyle='rgba(22,9,3,.93)';cx.fill();cx.lineWidth=.24;cx.strokeStyle=col;cx.stroke();
+ for(let k=0;k<l;k++)hotFlame(cx,px+pad+.6+k*1.25,py+h/2+.05,.62,col);
+ cx.fillStyle='#fff';cx.fillText('HOT',px+pad+fl,py+h/2+.08);cx.fillStyle=col;cx.fillText(String(n),px+pad+fl+tw+.7,py+h/2+.08);cx.restore();return true}
+function hotDrawAll(tm){/* Hot status is shown by the player icon color, not a separate court label. */}
+const hotTag=(p,sm)=>{const l=hotOf(p);return l?`<span class="hotb h${l}${sm?' sm':''}" title="${HOT_NAMES[l-1]}: ${p.hs} straight makes">${sm?p.hs:'HOT '+p.hs}</span>`:''};
+const hotName=p=>(hotOf(p)||coldOf(p))?`<span class="nmw"><span class="nmt">${p.n}</span>${hotTag(p)}${coldTag(p)}<em>${p.ovr}</em></span>`:`${p.n}<em>${p.ovr}</em>`;
+/* ===================== Cold Streak System =====================
+   Mirrors the hot-streak architecture, but tracks consecutive misses (P.cs).
+   Misses increase the cold level; any made field goal/free throw resets it. */
+const COLD_KEY='hc_coldstreak_cfg_v1';
+const COLD_DEFAULTS={enabled:true,thresholds:[3,5,8],penalty:[.02,.04,.06],creep:.003,maxPenalty:.08,typeMult:{three:1,mid:1,rim:.7},ftFactor:.5,timeout:{recover:[.8,.55,.25],reduceMin:[2,1,1],reduceMax:[4,3,2]},ai:{minOpen:.5,maxRisk:.2,minValue:.9,pass:[.16,.28,.4]}};
+const COLD_NAMES=['COLD','COLDER','ICE COLD'],COLD_COL=['#65c7ff','#389bff','#6574ff'];
+function coldSanitize(c){const n=(v,lo,hi)=>Math.min(hi,Math.max(lo,v));c.thresholds=c.thresholds.map(v=>Math.round(n(v,1,60)));for(let i=1;i<3;i++)if(c.thresholds[i]<=c.thresholds[i-1])c.thresholds[i]=c.thresholds[i-1]+1;c.penalty=c.penalty.map(v=>n(v,0,.3));c.creep=n(c.creep,0,.05);c.maxPenalty=n(c.maxPenalty,0,.3);['three','mid','rim'].forEach(k=>c.typeMult[k]=n(c.typeMult[k],0,2));c.ftFactor=n(c.ftFactor,0,2);c.timeout.recover=c.timeout.recover.map(v=>n(v,0,1));c.timeout.reduceMin=c.timeout.reduceMin.map(v=>Math.round(n(v,0,30)));c.timeout.reduceMax=c.timeout.reduceMax.map((v,i)=>Math.max(c.timeout.reduceMin[i],Math.round(n(v,0,30))));c.ai.minOpen=n(c.ai.minOpen,0,1);c.ai.maxRisk=n(c.ai.maxRisk,0,1);c.ai.minValue=n(c.ai.minValue,0,3);c.ai.pass=c.ai.pass.map(v=>n(v,0,1));return c}
+function coldLoad(){const c=JSON.parse(JSON.stringify(COLD_DEFAULTS));try{const v=JSON.parse(localStorage.getItem(COLD_KEY));if(v)for(const k of Object.keys(c)){if(v[k]&&typeof v[k]==='object')Object.assign(c[k],v[k]);else if(v[k]!==undefined)c[k]=v[k]}}catch(e){}return coldSanitize(c)}
+let COLD=coldLoad();function coldSave(){try{localStorage.setItem(COLD_KEY,JSON.stringify(COLD))}catch(e){}}
+function coldCfgSet(path,val,scale){if(path.startsWith('coldThreshold'))path='thresholds.'+path.replace('coldThreshold','');const keys=path.split('.');let o=COLD;for(let i=0;i<keys.length-1;i++)o=o[keys[i]];let v=val;if(typeof val==='string'){v=parseFloat(val);if(!isFinite(v)){XS.v++;ui();return}v/=scale||1}o[keys[keys.length-1]]=v;coldSanitize(COLD);coldSave();XS.v++;ui()}function coldCfgReset(){COLD=coldSanitize(JSON.parse(JSON.stringify(COLD_DEFAULTS)));coldSave();XS.v++;ui()}
+const coldLvlAt=n=>{if(!COLD.enabled)return 0;let l=0;COLD.thresholds.forEach((v,i)=>{if(n>=v)l=i+1});return l};const coldOf=P=>coldLvlAt(P.cs||0);
+function coldPenalty(P,ty){const n=P.cs||0,l=coldLvlAt(n);if(!l)return 0;return Math.min(COLD.maxPenalty,COLD.penalty[l-1]+COLD.creep*(n-COLD.thresholds[l-1]))*(ty==='ft'?COLD.ftFactor:(COLD.typeMult[ty]??1))}
+function coldShot(t,P,made,kind){if(!COLD.enabled)return;const before=coldOf(P);if(made){P.cm=(P.cm||0)+1;if(P.cm>=2){P.cs=0;P.cm=0}}else{P.cm=0;P.cs=(P.cs||0)+1}const after=coldOf(P);if(before!==after&&T&&T[t]){if(after>before)log(`${P.n} is ${after===1?'COLD':after===2?'COLDER':'ICE COLD'} — ${P.cs} straight misses (${T[t].short})`);else if(after===0&&before>0)log(`${P.n} breaks out of the cold streak (${T[t].short})`)} }
+function coldTimeout(caller,opt){opt=opt||{};const rnd=opt.rng||R,out=[];if(!COLD.enabled||!T)return out;T.forEach((tm,ti)=>tm.on.forEach(pi=>{const P=tm.pl[pi];if(!P||(opt.only&&opt.only!==P))return;const l=coldOf(P);if(!l)return;const chance=COLD.timeout.recover[l-1],n0=P.cs||0;let res='held';if(rnd()<chance){const k=COLD.timeout.reduceMin[l-1]+Math.floor(rnd()*(COLD.timeout.reduceMax[l-1]-COLD.timeout.reduceMin[l-1]+1));P.cs=Math.max(0,n0-k);res=P.cs===0?'recovered':coldOf(P)<l?'improved':'eased';if(!opt.quiet)log(P.cs===0?`${P.n} finds rhythm during the timeout (${tm.short})`:`${P.n} gets a chance to reset during the timeout (${tm.short})`)}out.push({P,ti,before:l,after:coldOf(P),from:n0,to:P.cs||0,res,chance})}));return out}
+function coldPassBonus(pb,e,op,risk,futureOp){const l=coldOf(pb),a=COLD.ai;return l&&op>=a.minOpen&&futureOp>=a.minOpen-.08&&risk<=a.maxRisk&&e.v>=a.minValue?a.pass[l-1]:0}
+function coldDrawOne(c,a,P){const l=coldOf(P);if(!l)return false;const n=P.cs,col=COLD_COL[l-1];c.save();c.font='700 1.6px "Barlow Condensed",sans-serif';c.textAlign='left';c.textBaseline='middle';const label='COLD',w=label.length*.95+String(n).length*.8+2.2,h=2.6,px=cl(a.x-w/2,.8,93.2-w),py=a.y+4.4;hotPill(c,px,py,w,h,1);c.fillStyle='rgba(4,13,30,.94)';c.fill();c.strokeStyle=col;c.lineWidth=.24;c.stroke();c.fillStyle=col;c.fillText(label,px+1,py+h/2);c.fillStyle='#fff';c.fillText(String(n),px+1+label.length*.95+.5,py+h/2);c.restore();return true}
+function coldDrawAll(){/* Cold status is shown by the player icon color, not a separate court label. */}
+const coldTag=p=>coldOf(p)?`<span class="hotb c${coldOf(p)}" style="background:#102844;color:${COLD_COL[coldOf(p)-1]};border-color:${COLD_COL[coldOf(p)-1]}" title="${COLD_NAMES[coldOf(p)-1]}: ${p.cs} straight misses">${COLD_NAMES[coldOf(p)-1]} ${p.cs}</span>`:'';
+
+function hotRenderLive(){const el=document.getElementById('hotLive');if(!el||!T)return;let h;
+ if(!HOT.enabled)h='<div class="dim">Hot streak system is off (Settings).</div>';
+ else{const rows=T.flatMap((tm,ti)=>tm.pl.map(p=>({p,tm}))).filter(r=>hotOf(r.p)>0||(r.p.hUp||0)>0).sort((a,b)=>hotOf(b.p)-hotOf(a.p)||(b.p.hs||0)-(a.p.hs||0)||(b.p.hMax||0)-(a.p.hMax||0)).slice(0,10);
+  h=rows.length?`<table class="hot-t"><tr><th class="l">Player</th><th>Now</th><th>Best</th><th>FG hot</th></tr>`+rows.map(r=>{const p=r.p,l=hotOf(p);return`<tr><td class="l">${p.n} <span class="dim">${r.tm.short}</span></td><td>${l?`<span class="hotb h${l}">${HOT_NAMES[l-1]} ${p.hs}</span>`:(p.hs||'—')}</td><td>${p.hMax||0}</td><td>${p.hMk||0}-${p.hAtt||0}</td></tr>`}).join('')+'</table>':`<div class="dim">Nobody is hot yet. ${HOT.thresholds[0]} straight makes turns a shooter HOT.</div>`;
+  const S=SZ&&SZ.hot,best=S&&Object.entries(S).sort((a,b)=>b[1].best-a[1].best)[0];if(best)h+=`<div class="dim" style="margin-top:6px;font-size:11px">Season best streak: ${best[0]} (${best[1].t}), ${best[1].best} straight.</div>`}
+ if(el._h!==h){el.innerHTML=h;el._h=h}}
+/* ---- settings ---- */
+function hotCfgSet(path,val,sc){const keys=path.split('.');let o=HOT;for(let i=0;i<keys.length-1;i++)o=o[keys[i]];const k=keys[keys.length-1];let v=val;if(typeof val==='string'){v=parseFloat(val);if(!isFinite(v)){XS.v++;ui();return}v=v/(sc||1)}
+ o[k]=v;hotSanitize(HOT);if(path==='enabled'&&!v)hotResetAll('silent');hotSave();XS.v++;ui()}
+function hotCfgReset(){HOT=hotSanitize(hotClone(HOT_DEFAULTS));hotSave();XS.v++;ui()}
+function hotSettingsHTML(){const C=HOT,
+ num=(p,v,min,max,step,sc)=>`<input type="number" aria-label="${p}" min="${min}" max="${max}" step="${step}" value="${+(v*sc).toFixed(3)}" onchange="hotCfgSet('${p}',this.value,${sc})">`,
+ tri=(p,arr,min,max,step,sc)=>arr.map((v,i)=>`<span class="hl">L${i+1}</span>${num(p+'.'+i,v,min,max,step,sc)}`).join(''),
+ chk=(p,v,l)=>`<label class="ck"><input type="checkbox"${v?' checked':''} onchange="hotCfgSet('${p}',this.checked)"> ${l}</label>`,
+ row=(l,c,h)=>`<div class="hr"><span>${l}</span><span class="hc">${c}</span>${h?`<small class="dim">${h}</small>`:''}</div>`;
+ return`<div class="hotcfg"><h2>Hot streak system</h2><div class="dim">Consecutive made shots per player raise shot accuracy. Missed shots reset the streak; timeouts may cool it. Saved in this browser; changes apply immediately.</div>`+
+ chk('enabled',C.enabled,'Enable hot streaks')+
+ row('Makes needed',tri('thresholds',C.thresholds,1,60,1,1),'Level 1 = HOT, 2 = HOTTER, 3 = ON FIRE')+
+ row('Accuracy boost (pts)',tri('boost',C.boost,0,30,.5,100),'Percentage points added to make probability')+
+ row('Growth / extra make (pts)',num('creep',C.creep,0,5,.1,100)+`<span class="hl">Cap</span>`+num('maxBoost',C.maxBoost,0,30,.5,100))+
+ row('Shot-type multiplier',['three','mid','rim'].map(k=>`<span class="hl">${k}</span>`+num('typeMult.'+k,C.typeMult[k],0,2,.05,1)).join(''))+
+ row('Free-throw boost factor',num('ftFactor',C.ftFactor,0,2,.05,1))+
+ chk('ftCounts',C.ftCounts,'Made free throws extend the streak')+chk('ftMissResets',C.ftMissResets,'Missed free throws end the streak')+chk('blockResets',C.blockResets,'Blocked shots end the streak')+
+ chk('resetOnQuarter',C.resetOnQuarter,'Reset all streaks each quarter')+chk('resetOnOvertime',C.resetOnOvertime,'Reset all streaks when overtime starts')+chk('subOutReset',C.subOutReset,'Hot player loses streak when subbed out')+
+ `<h3>Timeouts</h3>`+row('Chance a timeout disturbs (%)',tri('timeout.chance',C.timeout.chance,0,100,1,100),'Mild / moderate / extreme streak')+
+ row('...and ends it outright (%)',tri('timeout.clearShare',C.timeout.clearShare,0,100,1,100))+
+ row('...otherwise loses (min makes)',tri('timeout.reduceMin',C.timeout.reduceMin,0,30,1,1))+row('...otherwise loses (max makes)',tri('timeout.reduceMax',C.timeout.reduceMax,0,30,1,1))+
+ row('Own-timeout strength',num('timeout.ownFactor',C.timeout.ownFactor,0,2,.05,1),'1 = same as an opposing timeout (icing the shooter)')+
+ row('Composure / coach weight',`<span class="hl">IQ</span>`+num('timeout.composure',C.timeout.composure,0,1,.05,1)+`<span class="hl">Press</span>`+num('timeout.coach',C.timeout.coach,0,1,.05,1))+
+ `<h3>Passing AI</h3>`+row('Pass bonus (L1-L3)',tri('ai.pass',C.ai.pass,0,1,.02,1))+row('Own-shot bonus (L1-L3)',tri('ai.self',C.ai.self,0,.5,.01,1))+
+ row('Open / risk / shot value',`<span class="hl">Open</span>`+num('ai.minOpen',C.ai.minOpen,0,1,.05,1)+`<span class="hl">Risk</span>`+num('ai.maxRisk',C.ai.maxRisk,0,1,.02,1)+`<span class="hl">Value</span>`+num('ai.minValue',C.ai.minValue,0,3,.05,1),'A hot teammate only gets extra priority when open, the lane is safe and the shot is good')+
+ `<div class="bar" style="margin:10px 0"><button type="button" onclick="hotCfgReset()">Reset hot streak defaults</button><button type="button" onclick="hotRunTests()">Run hot streak self-test</button></div>${XS.hotT?`<pre class="hot-out">${XS.hotT}</pre>`:''}</div>`+`<div class="hotcfg"><h2>Cold streak system</h2><div class="dim">Consecutive misses reduce shot accuracy. A made shot or free throw resets the cold streak; timeouts may help a cold shooter recover. Settings save separately from hot streaks.</div>`+`<label class="ck"><input type="checkbox"${COLD.enabled?' checked':''} onchange="coldCfgSet('enabled',this.checked)"> Enable cold streaks</label>`+row('Misses needed',COLD.thresholds.map((v,i)=>`<span class="hl">L${i+1}</span>`+num('coldThreshold'+i,v,1,60,1,1)).join(''),'Level 1 = COLD, 2 = COLDER, 3 = ICE COLD')+row('Accuracy penalty (pts)',COLD.penalty.map((v,i)=>`<span class="hl">L${i+1}</span>`+`<input type="number" min="0" max="30" step=".5" value="${+(v*100).toFixed(1)}" onchange="coldCfgSet('penalty.${i}',this.value,100)">`).join(''),'Percentage points subtracted from make probability')+row('Timeout recovery chance (%)',COLD.timeout.recover.map((v,i)=>`<span class="hl">L${i+1}</span>`+`<input type="number" min="0" max="100" step="1" value="${Math.round(v*100)}" onchange="coldCfgSet('timeout.recover.${i}',this.value,100)">`).join(''),'Mild cold streaks are more likely to improve during a timeout')+`<div class="bar" style="margin:10px 0"><button type="button" onclick="coldCfgReset()">Reset cold streak defaults</button></div></div>`}
+/* ---- built-in self-test (Settings > Run hot streak self-test). Restores all game state afterwards. ---- */
+function hotRunTests(){const R_=[],ok=(n,c,d)=>R_.push({n,p:!!c,d:d||''});
+ const SAVE=hotClone(HOT),L0=logs.slice(),N0=logN,tips0=tips.slice(),tf0={...tipF},q0=q,fl0=flash,
+  F=['hs','hMax','hAtt','hMk','hUp','hCool','hot'],snap=T.map(tm=>tm.pl.map(p=>F.map(k=>p[k]))),gam0=T.map(t=>t.gam);
+ const Pq=T[0].pl[T[0].on[0]],iq0=Pq.attr.iq,drive=(t,s)=>pl(t,s),setIQ=(P,v)=>{const o=P.attr.iq;P.attr.iq=v;return()=>{P.attr.iq=o}};
+ try{HOT=hotSanitize(hotClone(HOT_DEFAULTS));
+  ok('Levels follow thresholds 3/5/8',[2,3,4,5,7,8,30].map(hotLvlAt).join()==='0,1,1,2,2,3,3',[2,3,4,5,7,8,30].map(hotLvlAt).join());
+  const bs=[...Array(31).keys()].map(n=>hotBoostAt(n,'three'));
+  ok('Boost grows with the streak and is capped',bs.every((v,i)=>i===0||v>=bs[i-1]-1e-12)&&bs[2]===0&&Math.abs(bs[3]-.02)<1e-9&&Math.abs(bs[5]-.04)<1e-9&&Math.abs(bs[8]-.06)<1e-9&&bs[30]<=HOT.maxBoost+1e-12,`n=3:${bs[3]} n=5:${bs[5]} n=8:${bs[8]} n=30:${bs[30]}`);
+  ok('Rim and free-throw boosts are scaled',Math.abs(hotBoostAt(8,'rim')-.06*.7)<1e-9&&Math.abs(hotBoostAt(8,'ft')-.03)<1e-9);
+  ok('Reset rules: FG make +1, FG miss reset, FT follows config',hotNext(4,true,'fg')===5&&hotNext(7,false,'fg')===0&&hotNext(4,true,'ft')===5&&hotNext(4,false,'ft')===0);
+  {HOT.ftCounts=false;HOT.ftMissResets=false;const a=hotNext(4,true,'ft')===4&&hotNext(4,false,'ft')===4&&hotNext(4,false,'fg')===0;HOT.ftCounts=true;HOT.ftMissResets=true;ok('Free-throw rules are configurable',a)}
+  [0,1].forEach(t=>{const P=drive(t,0);P.hs=0;P.hMax=0;P.hAtt=0;P.hMk=0;P.hUp=0;const lv=[];for(let i=0;i<8;i++){hotShot(t,P,true,'fg');coldShot(t,P,true,'fg');lv.push(hotOf(P))}hotShot(t,P,false,'fg');coldShot(t,P,false,'fg');
+   ok(`Team ${t+1}: streak progression and miss reset`,lv.join()==='0,0,1,1,2,2,2,3'&&P.hs===0&&P.hMax===8&&P.hUp===1&&P.hAtt===6&&P.hMk===5,`levels ${lv.join()} hs=${P.hs} best=${P.hMax} hot FG ${P.hMk}-${P.hAtt}`)});
+  [0,1].forEach(t=>{const dn={s:0};['three','mid','rim'].forEach(ty=>{const dist=ty==='three'?24:ty==='mid'?15:3,sl=[0,1,2,3,4].sort((x,y)=>(ty==='rim'?drive(t,x).fin-drive(t,y).fin:drive(t,x).s3-drive(t,y).s3))[0],P=drive(t,sl);P.hs=0;P.hot=0;const p0=shotP0(t,sl,ty,.15,dn,dist);P.hs=8;const p1=shotP0(t,sl,ty,.15,dn,dist),ex=hotBoostAt(8,ty);
+    ok(`Team ${t+1} ${ty}: real make probability rises with the streak`,Math.abs((p1-p0)-ex)<.003,`${p0.toFixed(3)} -> ${p1.toFixed(3)} (expected +${ex.toFixed(3)})`);P.hs=0})});
+  {const P=drive(0,2);P.hs=0;P.hot=0;const a=shotP0(0,2,'three',.5,{s:0},24);P.hot=-3;const b=shotP0(0,2,'three',.5,{s:0},24);P.hot=0;ok('Existing cold-shooting penalty is preserved',b<a-.02,`${a.toFixed(3)} vs ${b.toFixed(3)}`)}
+  /* timeouts */
+  const P=drive(0,0),oq=setIQ(P,75),og=T[1].gam;T[1].gam=50;T[0].gam=50;
+  const rate=(lv,caller,trials=5000)=>{const th=HOT.thresholds[lv-1];let end=0,any=0;for(let i=0;i<trials;i++){P.hs=th;const r=hotTimeout(caller,{only:P,quiet:true})[0];if(r.res==='ended')end++;if(r.res!=='held')any++}return{end:end/trials,any:any/trials}};
+  const r1=rate(1,1),r2=rate(2,1),r3=rate(3,1);
+  ok('Timeout: mild streaks end most often',r1.end>r2.end&&r2.end>r3.end,`end ${r1.end.toFixed(2)} / ${r2.end.toFixed(2)} / ${r3.end.toFixed(2)}`);
+  ok('Timeout: effects are probabilistic at every level',[r1,r2,r3].every(r=>r.any>0&&r.any<1),`any change ${r1.any.toFixed(2)} / ${r2.any.toFixed(2)} / ${r3.any.toFixed(2)}`);
+  ok('Timeout: extreme streaks rarely vanish outright',r3.end<.12,r3.end.toFixed(3));
+  const own=rate(1,0);ok('Timeout: your own timeout disturbs your shooter less',own.any<r1.any,`own ${own.any.toFixed(2)} vs opponent ${r1.any.toFixed(2)}`);
+  {oq();let r=setIQ(P,98);const hi=rate(1,1);r();r=setIQ(P,52);const lo=rate(1,1);r();T[1].gam=100;const pr=rate(1,1);T[1].gam=0;const ps=rate(1,1);T[1].gam=50;
+   ok('Timeout: composure (IQ) resists cooling',hi.any<lo.any,`IQ 98: ${hi.any.toFixed(2)}, IQ 52: ${lo.any.toFixed(2)}`);ok('Timeout: calling coach pressure raises the effect',pr.any>ps.any,`pressure 100: ${pr.any.toFixed(2)}, 0: ${ps.any.toFixed(2)}`)}
+  {const r=setIQ(P,75);P.hs=5;const b0=hotBoost(P,'three'),res=hotTimeout(1,{only:P,quiet:true,rng:()=>0})[0];ok('Timeout: forced clear removes the shooting boost and indicator state immediately',b0>0&&res.res==='ended'&&P.hs===0&&hotBoost(P,'three')===0&&hotOf(P)===0);
+   P.hs=8;const res2=hotTimeout(1,{only:P,quiet:true,rng:()=>.9999})[0];ok('Timeout: forced hold keeps the streak',res2.res==='held'&&P.hs===8);
+   P.hs=8;const rr=[0,.99,0],res3=hotTimeout(1,{only:P,quiet:true,rng:()=>rr.shift()??0})[0];ok('Timeout: weakening lowers level and boost',res3.res==='weaker'&&hotOf(P)<3,`8 -> ${P.hs}`);r()}
+  /* indicator */
+  {const calls=[],cxs=new Proxy({},{get:(o,k)=>k in o?o[k]:(k==='measureText'?(s=>({width:String(s).length*.9})):(...a)=>{calls.push([k,...a])}),set:(o,k,v)=>{o[k]=v;return true}});
+   P.hs=0;const off=hotDrawOne(cxs,{x:30,y:25,s:0},P,0)===false&&calls.length===0;P.hs=5;const on=hotDrawOne(cxs,{x:30,y:25,s:0},P,0)&&calls.some(c=>c[0]==='fillText'&&c[1]==='HOT')&&calls.some(c=>c[0]==='fillText'&&c[1]==='5');
+   calls.length=0;P.hs=0;const gone=hotDrawOne(cxs,{x:30,y:25,s:0},P,0)===false&&calls.length===0;ok('Indicator: appears with the count, disappears when the streak ends',off&&on&&gone)}
+  /* periods */
+  {const sq=q;P.hs=6;q=2;hotPeriod();const a=P.hs===6;q=5;hotPeriod();const b=P.hs===6;HOT.resetOnQuarter=true;q=3;hotPeriod();const c=P.hs===0;P.hs=6;HOT.resetOnQuarter=false;HOT.resetOnOvertime=true;q=4;hotPeriod();const d=P.hs===6;q=5;hotPeriod();const e=P.hs===0;HOT.resetOnOvertime=false;q=sq;
+   ok('Quarters and overtime keep streaks by default; resets are configurable',a&&b&&c&&d&&e)}
+  {P.hs=4;P.hMax=9;hotResetAll('game');ok('New game clears streaks and hot statistics',P.hs===0&&P.hMax===0&&T.every(t=>t.pl.every(p=>!p.hs&&!p.hUp)))}
+  /* AI */
+  {const e={v:1.3},Q=drive(0,3);Q.hs=5;const g=hotPassBonus(Q,e,.8,.05,.8),c1=hotPassBonus(Q,e,.3,.05,.8),c2=hotPassBonus(Q,e,.8,.4,.8),c3=hotPassBonus(Q,{v:.6},.8,.05,.8);Q.hs=0;const c4=hotPassBonus(Q,e,.8,.05,.8);
+   ok('AI: hot teammate is favoured only when open, safe and a good shot',g>0&&c1===0&&c2===0&&c3===0&&c4===0,`bonus ${g}`)}
+  {HOT.enabled=false;const Q=drive(0,3);Q.hs=9;const z=hotOf(Q)===0&&hotBoost(Q,'three')===0;hotShot(0,Q,true,'fg');const same=Q.hs===9;HOT.enabled=true;ok('Disabled system has no effect',z&&same)}
+ }catch(err){ok('Self-test crashed',false,String(err&&err.stack||err))}
+ finally{Pq.attr.iq=iq0;HOT=SAVE;logs=L0;logN=N0;tips=tips0;tipF=tf0;q=q0;flash=fl0;T.forEach((tm,i)=>{tm.gam=gam0[i];tm.pl.forEach((p,j)=>F.forEach((k,x)=>{p[k]=snap[i][j][x]}))})}
+ const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+ XS.hotT=R_.map(r=>`${r.p?'PASS':'FAIL'}  ${esc(r.n)}${r.d?'  ['+esc(r.d)+']':''}`).join('\n')+`\n\n${R_.filter(r=>r.p).length}/${R_.length} passed`;window._hotResults=R_;XS.v++;ui();return R_}
+
 let logN=0;
 function log(x){logs.unshift(ql()+' '+fmt(Math.max(0,clock))+'  '+x);logN++;if(logs.length>8000)logs.pop()}
 function passDebug(x){const el=$('#debugLog');if(!el||!$('#debugMode')?.checked)return;el.innerHTML=(x+'<br>'+el.innerHTML).slice(0,6500)}
@@ -867,7 +1068,7 @@ function init(){
  if(XS._me!==SZ.me){XS._me=SZ.me;XS.pf=SZ.me;XS.rt=SZ.me;XS.v++}
  const g=curGame()||{opp:TEAM_NAMES.find(t=>t[0]!==SZ.me)[0],home:true};SEL.me=SZ.me;SEL.opp=g.opp;SEL.diff=SZ.diff;
  const c0=TEAM_COLORS[SEL.me][0],c1=cdist(c0,TEAM_COLORS[SEL.opp][0])<110?TEAM_COLORS[SEL.opp][1]:TEAM_COLORS[SEL.opp][0];
- T=[mkTeam(SEL.me,c0),mkTeam(SEL.opp,c1)];T.hm=g.home?0:1;SCOUT={};applyDefaultPlan(T[0]);applyDefaultLineup(T[0]);T.forEach(t=>{t.plan=new Set(t.on);t.starters=new Set(t.on)});T[0].nextPlay=null;
+ T=[mkTeam(SEL.me,c0),mkTeam(SEL.opp,c1)];T.hm=g.home?0:1;T.forEach(tm=>tm.pl.forEach(p=>{p.cs=0;p.cm=0}));SCOUT={};applyDefaultPlan(T[0]);applyDefaultLineup(T[0]);T.forEach(t=>{t.plan=new Set(t.on);t.starters=new Set(t.on)});T[0].nextPlay=null;hotResetAll('game');
  QLEN=((SZ&&SZ.qmin)||12)*60;q=1;teamStatsViewIndex='total';quarterStatSnapshots=[];clock=QLEN;over=false;paused=true;speed=0;sel=null;tab=1;sideTab=1;oppSel=null;simAll=false;acc=0;run={t:-1,p:0};tips=[];logs=[];pbq=null;_pbk='';_pbs='';_pbn=0;logN=0;tipF={};flash=null;subLog=[];PS.p=null;closePlays();
  A=[0,1].map(t=>[0,1,2,3,4].map(s=>({t,s,x:47,y:25,vx:0,vy:0,mode:'',mt:0,dec:0,cut:null,slow:0,wy:0,dy:0})));
  ball={st:'tip',x:47,y:25,ht:0,hs:0,tt:0,dur:1.15,z:0};G={ph:'dead',hold:true,off:0,timer:1.15,why:'opening tip',tipPending:true,tipStarted:false,tipWinner:R()<.5?0:1,lastCpuScoreClock:QLEN};AI();
@@ -905,10 +1106,10 @@ function poss(team,kind,spot,c24){if(G.ftQ&&G.ftQ.length&&!G.ftRun){const ar=arg
  Object.assign(ball,{st:'held',ht:team,hs:G.inb,tt:0,z:0})}
 function dead(why,secs,hold){secs+=(G.ftExtra||0);G.ftExtra=0;if(/shot clock/i.test(why)){SFX.buzzer();setTimeout(SFX.whistle,350)}else if(/quarter|end of|buzzer/i.test(why))SFX.buzzer();else if(/foul|violation|seconds|out of bounds|travel|backcourt|jump|technical/i.test(why))SFX.whistle();
  G.ph='dead';G.why=why;G.timer=secs;G.hold=!!hold;G.subOK=SUBOK.test(why)||!!(G.toQ&&!FAST&&!hold&&T[0].to>0);if(G.subOK)applySubs();const o=T[0];
- if(G.toQ){G.toQ=false;if(!FAST&&!hold&&o.to>0){o.to--;o.pl.forEach((p,i)=>{if(o.on.includes(i))p.en=Math.min(100,p.en+18)});run={t:-1,p:0};if(q>=4&&clock<=9&&G.spot){G.spot={x:47,y:49.5};G.advanceInbound=true;}G.hold=true;paused=true;G.toPend=true;log('Timeout, '+o.short+(q>=4&&clock<=9?' — advances the ball for a late-game possession':''));if(q>=4&&clock<=9&&Math.abs(T[0].sc-T[1].sc)>0){G.spot={x:47,y:49.5};G.advanceInbound=true}openPlays();return}}
+ if(G.toQ){G.toQ=false;if(!FAST&&!hold&&o.to>0){o.to--;o.pl.forEach((p,i)=>{if(o.on.includes(i))p.en=Math.min(100,p.en+18)});run={t:-1,p:0};if(q>=4&&clock<=9&&G.spot){G.spot={x:47,y:49.5};G.advanceInbound=true;}G.hold=true;paused=true;G.toPend=true;log('Timeout, '+o.short+(q>=4&&clock<=9?' — advances the ball for a late-game possession':''));hotTimeout(T.indexOf(o));coldTimeout(T.indexOf(o));if(q>=4&&clock<=9&&Math.abs(T[0].sc-T[1].sc)>0){G.spot={x:47,y:49.5};G.advanceInbound=true}openPlays();return}}
  const lateGame=q>=4&&clock<=9&&Math.abs(T[0].sc-T[1].sc)>0,nextOff=why==='made'?1-G.off:G.off,stopRun=run.t===0&&run.p>=8,coldCpu=nextOff===1&&((G.lastCpuScoreClock||clock)-clock)>=100;if(T[1].to>0&&!G.hold&&nextOff===1&&(lateGame||stopRun||coldCpu)&&(!FAST||lateGame)){G.cpuTimeoutPending=true;G.cpuTimeoutLate=lateGame;if(lateGame)G.advanceInbound=true;G.timer=5;run={t:-1,p:0};log(`Timeout, ${T[1].short}${lateGame?' — preparing a late-game advance':stopRun?' — stops the opponent scoring run':' — resets a cold offense'}`);AI()} }
 function live(){const why=G.why;if(G.tipPending){G.ph='tip';G.tipStarted=true;ball.st='tip';ball.x=47;ball.y=25;ball.z=0;ball.tt=0;ball.dur=1.15;G.hold=false;return}if(G.inboundPending&&G.inboundReceiver!=null){const ib0=A[G.off][G.inb],rc0=A[G.off][G.inboundReceiver],ready=hyp(ib0.x-G.inbSpot.x,ib0.y-G.inbSpot.y)<1.0&&hyp(rc0.x-G.inbRecvT.x,rc0.y-G.inbRecvT.y)<3;if(!ready&&(G.inbWait=(G.inbWait||0)+.2)<4.5){G.ph='dead';G.timer=.2;G.hold=false;return}if(!ready)SC.inboundForced=(SC.inboundForced||0)+1}
- if(G.ftShooter){G.ftShooter=null;A.flat().forEach(a=>a.ftT=null)}G.ph='live';G.why='';G.subOK=false;G.scrs=[];ball.st='held';A.flat().forEach(a=>a.dec=.5);if(G.cpuTimeoutPending&&G.off===1&&T[1].to>0){G.cpuTimeoutPending=false;T[1].to--;T[1].pl.forEach((p,i)=>{if(T[1].on.includes(i))p.en=Math.min(100,p.en+16)});run={t:-1,p:0};const cand_=PL.filter(p=>/QUICK|PICK|PNR|FLARE|CUT/i.test(p.n)),sty_=cand_.filter(p=>p.sty.includes(T[1].style)),cpuPlay=pick(sty_.length?sty_:cand_.length?cand_:PL);T[1].nextPlay={p:cpuPlay,S:cpuPlay.S};G.planned=false;log(`Timeout, ${T[1].short}${G.cpuTimeoutLate?' — advances the ball for a late-game shot and calls '+cpuPlay.n:' — stops the run and resets with '+cpuPlay.n}`);G.timer=0;G.cpuTimeoutLate=false;}{const Q=T[G.off];if(Q.nextPlay){A.flat().forEach(a=>{a.mode='';a.cut=null;a.slow=0;a.under=0});G.fbGo=false;G.fb=false;G.planned=false;G.scrs=[];G.play=null;log(`${Q.short}: set up for "${Q.nextPlay.p.n}"`)}}if(G.inboundPending){const t=G.off,ib=A[t][G.inb],rc=G.inboundReceiver==null?null:A[t][G.inboundReceiver];if(rc){ib.vx=ib.vy=0;rc.vx=rc.vy=0;rc.dec=.1;rc.inboundLock=0;ball.st='held';ball.ht=t;ball.hs=ib.s;ball.x=ib.x;ball.y=ib.y;G.inboundOutside=true;G.inboundPending=false;G.advanceInbound=false;log(`${pl(t,G.inb).n} inbounds from the ${Math.abs(ib.x-47)>46?'baseline':'sideline'} to ${pl(t,rc.s).n}`);SC.inboundPasses=(SC.inboundPasses||0)+1;pass(ib,rc.s,true);ball.dur=Math.max(ball.dur,.55);G.inboundOutside=false}}}
+ if(G.ftShooter){G.ftShooter=null;A.flat().forEach(a=>a.ftT=null)}G.ph='live';G.why='';G.subOK=false;G.scrs=[];ball.st='held';A.flat().forEach(a=>a.dec=.5);if(G.cpuTimeoutPending&&G.off===1&&T[1].to>0){G.cpuTimeoutPending=false;T[1].to--;T[1].pl.forEach((p,i)=>{if(T[1].on.includes(i))p.en=Math.min(100,p.en+16)});run={t:-1,p:0};const cand_=PL.filter(p=>/QUICK|PICK|PNR|FLARE|CUT/i.test(p.n)),sty_=cand_.filter(p=>p.sty.includes(T[1].style)),cpuPlay=pick(sty_.length?sty_:cand_.length?cand_:PL);T[1].nextPlay={p:cpuPlay,S:cpuPlay.S};G.planned=false;log(`Timeout, ${T[1].short}${G.cpuTimeoutLate?' — advances the ball for a late-game shot and calls '+cpuPlay.n:' — stops the run and resets with '+cpuPlay.n}`);hotTimeout(1);coldTimeout(1);G.timer=0;G.cpuTimeoutLate=false;}{const Q=T[G.off];if(Q.nextPlay){A.flat().forEach(a=>{a.mode='';a.cut=null;a.slow=0;a.under=0});G.fbGo=false;G.fb=false;G.planned=false;G.scrs=[];G.play=null;log(`${Q.short}: set up for "${Q.nextPlay.p.n}"`)}}if(G.inboundPending){const t=G.off,ib=A[t][G.inb],rc=G.inboundReceiver==null?null:A[t][G.inboundReceiver];if(rc){ib.vx=ib.vy=0;rc.vx=rc.vy=0;rc.dec=.1;rc.inboundLock=0;ball.st='held';ball.ht=t;ball.hs=ib.s;ball.x=ib.x;ball.y=ib.y;G.inboundOutside=true;G.inboundPending=false;G.advanceInbound=false;log(`${pl(t,G.inb).n} inbounds from the ${Math.abs(ib.x-47)>46?'baseline':'sideline'} to ${pl(t,rc.s).n}`);SC.inboundPasses=(SC.inboundPasses||0)+1;pass(ib,rc.s,true);ball.dur=Math.max(ball.dur,.55);G.inboundOutside=false}}}
 const scr_=p=>p.ovr*(.4+.6*p.en/100);
 function fixPlan(t){[...t.plan].forEach(i=>{if(t.pl[i].pf>=6){if(!t.pl[i].fo){t.pl[i].fo=1;log(`${t.pl[i].n} has fouled out (6 fouls)`);SFX.whistle()}t.plan.delete(i);let b=-1,bs=-1;t.pl.forEach((p,k)=>{if(!t.plan.has(k)&&p.pf<6&&scr_(p)>bs){bs=scr_(p);b=k}});if(b>=0)t.plan.add(b)}})}
 function autoPlan(t){const inP=[...t.plan].sort((a,b)=>scr_(t.pl[a])-scr_(t.pl[b]));
@@ -920,7 +1121,7 @@ function applyPlan(t){if(G.ftQ&&G.ftQ.length){G.planPending=true;return}   // th
 function applySubs(){T.forEach((t,ti)=>{if(ti||t.auto)for(let k=0;k<3;k++)autoPlan(t);applyPlan(t)})}
 const SUBOK=/violation|travel|seconds|shot clock|foul|quarter|end of|jump|technical|timeout/i;
 function canSubNow(){return G.ph==='dead'&&!!G.subOK}
-function doSub(t,s,bi){if(!canSubNow())return false;const o=t.pl[t.on[s]];t.on[s]=bi;subLog.push(G.ph);log(`${t.short}: ${t.pl[bi].n} in for ${o.n}`);if(t===T[0]&&AIX().react>0)AI();return true}
+function doSub(t,s,bi){if(!canSubNow())return false;const o=t.pl[t.on[s]];if(HOT.subOutReset)hotClear(t===T[0]?0:1,o,'sub');t.on[s]=bi;subLog.push(G.ph);log(`${t.short}: ${t.pl[bi].n} in for ${o.n}`);if(t===T[0]&&AIX().react>0)AI();return true}
 /* ---------- geometry / decisions ---------- */
 function openF(t,x,y,ex){let m=99;A[1-t].forEach(d=>{if(d.s!==ex)m=Math.min(m,hyp(d.x-x,d.y-y))});return cl((m-2)/4.5,0,1)}
 // Predict whether a receiver will still be open when the pass arrives and they can release the shot. Faster defenders close space more quickly.
@@ -932,7 +1133,7 @@ const homeT=()=>(typeof T!=='undefined'&&T&&T.hm!=null)?T.hm:(typeof SZ!=='undef
 function shotP(t,s,ty,op,nd,dist){return shotP0(t,s,ty,op,nd,dist)*(t===homeT()?1.03:1)}   // home court: +3% shot success
 function shotP0(t,s,ty,op,nd,dist){
  const P=pl(t,s),O=T[t],dp=pl(1-t,nd.s),sk=ty==='three'?P.s3:ty==='mid'?P.mid:P.fin;
- let p={three:0.3,mid:0.43,rim:0.61}[ty]+(sk*(.85+.15*P.en/100)-({three:74,mid:80,rim:80}[ty]))*.0055-(dp.def*(.85+.15*dp.en/100)-78)*.0035+(op-.5)*0.13-(O.tempo-3)*.003+(P.hot||0)*.01+(ty==='rim'?(P.spd-dp.spd)*.001:(P.spd-dp.spd)*.002);
+ let p={three:0.3,mid:0.43,rim:0.61}[ty]+(sk*(.85+.15*P.en/100)-({three:74,mid:80,rim:80}[ty]))*.0055-(dp.def*(.85+.15*dp.en/100)-78)*.0035+(op-.5)*0.13-(O.tempo-3)*.003+Math.min(0,P.hot||0)*.01+hotBoost(P,ty)-coldPenalty(P,ty)+(ty==='rim'?(P.spd-dp.spd)*.001:(P.spd-dp.spd)*.002);
  if(O.shotprofile==='rim')p+=ty==='rim'?.045:ty==='three'?-.025:0;if(O.shotprofile==='mid')p+=ty==='mid'?.045:ty==='rim'?-.015:ty==='three'?-.02:0;if(O.shotprofile==='three')p+=ty==='three'?.04:ty==='rim'?-.015:0;if(O.gameplan==='attack')p+=ty==='rim'?.045:0;if(O.gameplan==='perimeter')p+=ty==='three'?.035:0;if(O.gameplan==='star'&&s===O.on.slice().sort((a,b)=>O.pl[b].ovr-O.pl[a].ovr)[0])p+=.035;if(O.gameplan==='protect')p+=ty==='mid'?.015:ty==='three'?-.015:0;if(O.gameplan==='comeback')p+=ty==='three'?.025:0;if(ty==='rim')p+=(P.str-dp.str)*.0008+(P.attr.finish-dp.attr.interior)*.0009+(P.attr.strength-dp.attr.strength)*.00045; p+=(P.attr.iq-75)*.00035+(P.attr.handle-dp.attr.perimeter)*.00025-(dp.attr.iq-75)*.00015;if(dist>30)p*=.4;p+=-.005;return cl(p,.04,.78)}
 function laneRisk(t,x1,y1,x2,y2){let r=0;const L=hyp(x2-x1,y2-y1)||1;A[1-t].forEach(d=>{const f=cl(((d.x-x1)*(x2-x1)+(d.y-y1)*(y2-y1))/(L*L),0,1),k=hyp(d.x-(x1+f*(x2-x1)),d.y-(y1+f*(y2-y1)));if(hyp(d.x-x1,d.y-y1)<2.6&&k>1.1)return;if(k<3)r+=(1-k/3)*(.32+pl(d.t,d.s).attr.anticipation/180+pl(d.t,d.s).attr.perimeter/260)});return Math.min(r,.9)}
 function evShot(t,s,x,y){const [ty,dist]=shotType(t,x,y),[nd]=nearD(t,x,y),op=openF(t,x,y),p=shotP(t,s,ty,op,nd,dist);const mp=ty==='mid'&&!(G.c24<5)&&!(pl(t,s).mid>=88&&pl(t,s).mid>pl(t,s).s3+8)?((G.fb||G.fbGo)?.15:.42):1;   // mid-range is situational: late clock or a true mid-range specialist only
@@ -942,7 +1143,7 @@ function decide(a,opt){
  opt=opt||{};const t=a.t,s=a.s,O=T[t],S=O.style,Ht=hoop(t),du=hyp(a.x-Ht.x,a.y-Ht.y),P=pl(t,s),c=G.c24,dbl=G.dbl>=0||!!opt.trap;
  const periodEnd=clock<=7.5,gameEnd=q>=4&&clock<=8.5&&Math.abs(T[0].sc-T[1].sc)>0,backcourt=Math.abs(a.x-Ht.x)>47,heave=periodEnd&&backcourt&&!gameEnd,urg=cl((20-c)/16,0,1)+(O.tempo-3)*.05,minT=[22,20,17,14,11][O.tempo-1],thr=(opt.bc?.7:1.05-.5*urg-(G.putback?.3:0)-(opt.iso?.08:0)+(t===1?AIX().thr:0)),canShoot=!opt.bc&&!opt.trap&&(G.putback||G.fcT>=minT||c<4||opt.iso||opt.pull);
  const me=evShot(t,s,a.x,a.y),cand=[],myMM=mmVal(t,s),popPen=(me.ty==='mid'&&G.scrs.some(x=>x.s===s&&(x.follow==='pop'||x.follow==='roll'||x.follow==='slip')&&x.t<4.5))?.3:0;
- if(canShoot||(!opt.bc&&!opt.trap&&me.v>=1.7))cand.push({k:'shoot',v:me.v-popPen+.1+(me.ty==='three'?.12+(ST[S].k.three||0):0)+(me.dist>31?-1:0)+(opt.iso?.05:0)+myMM*.3*(t===1?AIX().mm:1)+(opt.pull&&P.s3>=76&&me.ty!=='rim'?.15:0)});
+ if(canShoot||(!opt.bc&&!opt.trap&&me.v>=1.7))cand.push({k:'shoot',v:me.v-popPen+.1+(me.ty==='three'?.12+(ST[S].k.three||0):0)+(me.dist>31?-1:0)+(opt.iso?.05:0)+hotSelfBonus(P,me,t,a)-coldOf(P)*.10+myMM*.3*(t===1?AIX().mm:1)+(opt.pull&&P.s3>=76&&me.ty!=='rim'?.15:0)});
  A[t].forEach(b=>{if(b.s===s)return;const dd=hyp(b.x-a.x,b.y-a.y);if(dd<4||bcx(t,b))return;if((b.s===G.lastPassFrom||b.s===G.astS)&&!dbl&&G.passes>0&&!opt.bc)return;
   const recentPair=pairLoop(a.s,b.s);if(recentPair>=2&&!opt.bc&&!dbl)return;
   const e=evShot(t,b.s,b.x,b.y),pb=pl(t,b.s),risk=laneRisk(t,a.x,a.y,b.x,b.y),op=openF(t,b.x,b.y),futureGap=projectedGap(t,b,a),futureOp=projectedOpen(t,b,a);
@@ -964,7 +1165,7 @@ function decide(a,opt){
    if(em==='post'&&hyp(b.x-Ht.x,b.y-Ht.y)<14&&(pb.pos==='C'||pb.pos==='PF'))v+=.3;
    if(em==='pnr'&&G.scrs.some(x=>x.s===b.s||x.f===b.s))v+=.25;
    if(em==='star'&&b.s===star&&op>.45)v+=.2;}
-  if(opt.iso&&!dbl)v-=.3;if(dbl)v+=.25;if(opt.bc)v+=.2;if(opt.feed===b.s)v+=.5;cand.push({k:'pass',v,b:b.s,ev:e.v})});
+  if(opt.iso&&!dbl)v-=.3;if(dbl)v+=.25;if(opt.bc)v+=.2;if(opt.feed===b.s)v+=.5;v+=hotPassBonus(pb,e,op,risk,futureOp)+coldPassBonus(pb,e,op,risk,futureOp);cand.push({k:'pass',v,b:b.s,ev:e.v})});
  if(!opt.bc&&!opt.trap&&du<=32&&a.mode!=='drive'&&G.fcT>=minT*.7){const[nd]=nearD(t,a.x,a.y),dp=pl(1-t,nd.s);let n=0;A[1-t].forEach(d=>{if(d!==nd&&hyp(d.x-Ht.x,d.y-Ht.y)<du&&hyp(d.x-(a.x+Ht.x)/2,d.y-(a.y+Ht.y)/2)<8)n++});
   cand.push({k:'drive',v:(ST[S].k.drive||0)+(O.emph==='basket'?.15:0)+(O.emph==='star'&&s===[...A[t]].sort((u,w)=>pl(t,w.s).ovr-pl(t,u.s).ovr)[0].s?.1:0)+.78+(P.spd-dp.spd)*.05+(P.fin-dp.def)/160-n*.1+(du<17?.58:du<25?.28:0)+(dp.x!=null&&hyp(dp.x-Ht.x,dp.y-25)>hyp(a.x-Ht.x,a.y-25)+2?.18:0)+(G.scrs.some(x=>x.f===s&&x.t>.8&&x.t<2.4)?.2:0)+(opt.iso?.12:0)+myMM*.3})}
  if(heave){const shotValue=me.v-.35; cand.push({k:'shoot',v:Math.max(shotValue,1.85),forcedHeave:true})}if(t===1&&AIX().noise>0)cand.forEach(x=>{if(!x.forcedHeave)x.v+=(R()+R()-1)*AIX().noise});cand.sort((x,y)=>y.v-x.v);const b=cand[0],sh=cand.find(x=>x.k==='shoot');if($('#debugMode')?.checked)passDebug(`<b>${P.n}</b> thr ${thr.toFixed(2)} → `+cand.slice(0,5).map(x=>`${x.k}${x.b!=null?' '+pl(t,x.b).n:''} ${x.v.toFixed(2)}`).join(' | ')+` · shot clock ${Math.ceil(c)}`);if(heave&&b&&b.k==='shoot'){log(`${P.n} launches a late-quarter shot before time expires`);return shoot(a)}if(!b){a.dec=.4;return}
@@ -1018,7 +1219,7 @@ function shoot(a){
  if((G.fb||G.fbGo)&&a.mode!=='drive'&&G.c24>3&&clock>8&&hyp(a.x-hoop(a.t).x,a.y-hoop(a.t).y)>9){const e_=evShot(a.t,a.s,a.x,a.y);if(e_.ty==='three'&&Math.abs(a.y-25)<11&&R()<.85){a.mode='drive';a.mt=2.2;a.dy=cl((25-a.y)*.3,-3,3);a.dec=.2;return}}
  const t=a.t,s=a.s,P=pl(t,s),[ty,dist]=shotType(t,a.x,a.y),op=openF(t,a.x,a.y),[nd,md]=nearD(t,a.x,a.y),p=shotP(t,s,ty,op,nd,dist),dp=pl(1-t,nd.s),Ht=hoop(t);
  P.fa++;if(ty==='three')P.ta++;a.mode='';
- if(ty!=='three'&&md<3.4&&R()<(.02+(dp.blkR-50)*.0015)*(1-op)*1.3*(t===0?EXX().blk:1)){dp.blk++;P.to+=0;log(`${dp.n} blocks ${P.n}`);flash={t:1.1,x:a.x,y:a.y,s:'Blocked'};
+ if(ty!=='three'&&md<3.4&&R()<(.02+(dp.blkR-50)*.0015)*(1-op)*1.3*(t===0?EXX().blk:1)){dp.blk++;P.to+=0;log(`${dp.n} blocks ${P.n}`);if(HOT.blockResets)hotShot(t,P,false,'fg');coldShot(t,P,false,'fg');flash={t:1.1,x:a.x,y:a.y,s:'Blocked'};
   Object.assign(ball,{st:'loose',tt:0,L:{x:a.x+(Ht.x-a.x)*.2+(R()-.5)*8,y:a.y+(R()-.5)*10},x:a.x,y:a.y,fx:a.x,fy:a.y,from:'blk'});G.putback=false;return}
  if(md<3.8&&R()<(0.12+(ty==='rim'?0.1:0)+((API_PLAYER_DATA[P.n]?.attributes?.drawFoul??60)-60)*.001+(T[1-t].gam-50)*.0005)*(1-op*.6)){shootFoul(a,ty,nd,p);return}
  const dur=ty==='three'?.95:ty==='mid'?.8:.55;
@@ -1038,10 +1239,10 @@ function setFTLineup(t,s){
  defSlots.forEach((a,i)=>{const p=i<3?defLane[i]:defBack[i-3];a.ftT={x:p.x,y:p.y}});
  ball.st='held';ball.ht=t;ball.hs=s;ball.x=line;ball.y=25;ball.z=0;G.ftShooter={t,s,line,y:25};G.ftVisual=null
 }
-function ftSeq(t,s,n){const P=pl(t,s),res=[];for(let k=0;k<n;k++)res.push(R()<(45+P.mid*.55)/100?1:0);
+function ftSeq(t,s,n){const P=pl(t,s),res=[];let vs=P.hs||0;for(let k=0;k<n;k++){const m=R()<cl((45+P.mid*.55)/100+hotBoostAt(vs,'ft'),0,.99)?1:0;res.push(m);vs=hotNext(vs,!!m,'ft')}
  G.ftQ=(G.ftQ||[]).concat(res.map((m,k)=>({t,s,m,k,n,at:.35+k*1.25})));G.ftClock=0;G.ftExtra=Math.max(G.ftExtra||0,n*1.25+1.9);
  return[res.reduce((x,y)=>x+y,0),res[n-1]]}
-function ftApply(V){if(!V||V.applied)return;V.applied=true;const f=V.q,P=pl(f.t,f.s);P.fta++;if(f.m){P.ftm++;P.pts++;T[f.t].sc++;if(run.t===f.t)run.p++;else run={t:f.t,p:1}}log(`${P.n} free throw ${f.k+1} of ${f.n}: ${f.m?'good':'missed'}`);flash={t:.9,x:V.tx,y:25,s:f.m?'Good':'Miss'}}
+function ftApply(V){if(!V||V.applied)return;V.applied=true;const f=V.q,P=pl(f.t,f.s);P.fta++;if(f.m){P.ftm++;P.pts++;T[f.t].sc++;if(run.t===f.t)run.p++;else run={t:f.t,p:1}}log(`${P.n} free throw ${f.k+1} of ${f.n}: ${f.m?'good':'missed'}`);hotShot(f.t,P,!!f.m,'ft');coldShot(f.t,P,!!f.m,'ft');flash={t:.9,x:V.tx,y:25,s:f.m?'Good':'Miss'}}
 function ftTail(){if(G.ftVisual&&!G.ftVisual.done)return;if(G.planPending){G.planPending=false;applySubs()}if(G.ftDefer){const f=G.ftDefer;G.ftDefer=null;f();G.timer=Math.max(G.timer||0,.9)}}
 function ftTick(dt){if(G.ftShooter&&G.ftQ&&!G.ftQ.length){G.ftPost=(G.ftPost||0)+dt;if(G.ftPost>.9){G.ftShooter=null;G.ftPost=0;A.flat().forEach(a=>a.ftT=null)}}if(!G.ftQ||!G.ftQ.length){ftTail();return}if(!G.ftSettled){G.ftWait=(G.ftWait||0)+dt;if(A.flat().every(a=>!a.ftT||hyp(a.x-a.ftT.x,a.y-a.ftT.y)<1.8)||G.ftWait>3.4){G.ftSettled=true;G.ftClock=0}else return}G.ftClock+=dt;while(G.ftQ.length&&G.ftClock>=G.ftQ[0].at){const q=G.ftQ.shift(),P=pl(q.t,q.s),H=hoop(q.t),line=G.ftShooter?G.ftShooter.line:(H.x<47?19:75);
   if(G.ftVisual&&!G.ftVisual.applied)ftApply(G.ftVisual);
@@ -1050,7 +1251,7 @@ function ftTick(dt){if(G.ftShooter&&G.ftQ&&!G.ftQ.length){G.ftPost=(G.ftPost||0)
 function shootFoul(a,ty,nd,p){
  const t=a.t,P=pl(t,a.s),fd=pl(1-t,nd.s),n=ty==='three'?3:2;setFTLineup(t,a.s);fd.pf++;T[1-t].pf++;
  const and1=R()<p*.6;let mk=0,last;
- if(and1){const pt=ty==='three'?3:2;P.fg++;P.pts+=pt;if(ty==='three')P.tm++;T[t].sc+=pt;if(run.t===t)run.p+=pt;else run={t,p:pt};[mk,last]=ftSeq(t,a.s,1);log(`${P.n} scores and is fouled by ${fd.n}. And-one free throw coming`);flash={t:1.1,x:hoop(t).x,y:25,s:'And-one'};
+ if(and1){const pt=ty==='three'?3:2;P.fg++;P.pts+=pt;if(ty==='three')P.tm++;T[t].sc+=pt;if(run.t===t)run.p+=pt;else run={t,p:pt};hotShot(t,P,true,'fg');coldShot(t,P,true,'fg');[mk,last]=ftSeq(t,a.s,1);log(`${P.n} scores and is fouled by ${fd.n}. And-one free throw coming`);flash={t:1.1,x:hoop(t).x,y:25,s:'And-one'};
   dead('foul',4,false);if(last||R()<.5)poss(1-t,'made');else{rebAbs(t,1-t);}return}
  [mk,last]=ftSeq(t,a.s,n);log(`${fd.n} fouls ${P.n}. ${n} free throw${n>1?'s':''}`);flash={t:1.1,x:hoop(t).x,y:25,s:`Fouled · ${n} FT`};
  dead('foul',4.5,false);if(last)poss(1-t,'made');else rebAbs(t,1-t)}
@@ -1076,12 +1277,12 @@ function gameState(){return G.ph==='tip'?'tip':G.ftShooter?'free-throw':G.inboun
 function endShotMade(P,t,ty,as){const pt=ty==='three'?3:2;P.fg++;P.pts+=pt;if(ty==='three')P.tm++;T[t].sc+=pt;if(run.t===t)run.p+=pt;else run={t,p:pt}}
 function resolveShot(){
  const t=G.shotT,s=ball.sh,P=pl(t,s),ty=ball.ty,Ht=hoop(t);
- if(R()<ball.p){P.hot=Math.min(3,Math.max(0,P.hot||0)+1);endShotMade(P,t,ty);let as='';
+ if(R()<ball.p){P.hot=0;endShotMade(P,t,ty);let as='';
   if(G.astT<(G.astDbl?3.2:1.8)&&G.astS>=0&&G.astS!==s){const a=pl(t,G.astS);a.as++;as=`, assist ${a.n}`}
   log(`${P.n} ${ty==='three'?'hits a three':ty==='rim'?'scores at the rim':'hits a jumper'} (${T[t].short}${as})`);flash={t:1.1,x:Ht.x+(dirOf(t)>0?-7:7),y:25,s:'+'+(ty==='three'?3:2)};
-  ball.st='dead';dead('made',.8,false);poss(1-t,'made');return}
+  hotShot(t,P,true,'fg');coldShot(t,P,true,'fg');ball.st='dead';dead('made',.8,false);poss(1-t,'made');return}
  P.hot=Math.max(-3,Math.min(0,P.hot||0)-1);const dir=dirOf(t);Object.assign(ball,{st:'loose',tt:0,x:Ht.x,y:Ht.y,fx:Ht.x,fy:Ht.y,L:{x:Ht.x-dir*((ty==='three'?7:ty==='mid'?4.5:2.5)+R()*(ty==='three'?14:ty==='mid'?10:7)),y:25+(R()-.5)*(ty==='three'?28:ty==='mid'?19:12)},from:'miss'});
- flash={t:.9,x:Ht.x+(dir>0?-7:7),y:25,s:'Miss'};log(`${P.n} misses a ${ty==='three'?'three':ty==='rim'?'layup':'jumper'}`)}
+ flash={t:.9,x:Ht.x+(dir>0?-7:7),y:25,s:'Miss'};log(`${P.n} misses a ${ty==='three'?'three':ty==='rim'?'layup':'jumper'}`);hotShot(t,P,false,'fg')}
 function rebound(){
  const L=ball.L,t=G.off,all=A.flat(),H=hoop(t),bounce=hyp(L.x-H.x,L.y-25),long=bounce>15;
  // Short misses are contested near the rim; long misses expand the reachable area. Transition-minded guards are less likely to crash short rebounds.
@@ -1251,8 +1452,11 @@ function offenseAI(dt){
  {const hd=ball.st==='held'&&ball.ht===t&&G.ph==='live'&&!G.inboundOutside?A[t][ball.hs]:null;if(hd){const u_=Math.abs(hd.x-H.x);if(u_<44){G.crossed=true;G.crossedT=t;G.lastTouch=t}else if(G.crossed&&u_>46.2&&u_<50){hd.x=H.x+(hd.x<H.x?-1:1)*46.2;hd.vx=0}}}
  A[t].forEach(b=>{if(b.cut)b.cut.t-=dt});A[1-t].forEach(d=>{if(d.under>0)d.under-=dt});
  G.scrs.forEach(sc=>{sc.t+=dt;if(!sc.sw&&sc.t>1.1){sc.sw=true;screenContact(sc)}});G.scrs.forEach(sc=>{if(sc.t>=3.6&&sc.type==='ball'&&ball.st==='held'&&ball.ht===t&&ball.hs===sc.f&&G.c24>8&&(G.rsc||0)<2&&!G.reWant){G.rsc=(G.rsc||0)+1;G.reWant=true;G.scrT=.3;G.lastScr=sc.s}});G.scrs=G.scrs.filter(sc=>sc.t<3.6&&G.c24>2.5);
- if(G.ph==='live')for(const b of A[t]){const inP=Math.abs(b.x-H.x)<19&&Math.abs(b.y-25)<8;
-  if(inP){b.pt=(b.pt||0)+dt;if(b.pt<=dt*1.5)b.aw=R()<.01?2.95:1.2+R()*.9;if(b.pt>3&&b.mode!=='drive'&&!(ball.st==='held'&&ball.ht===t&&ball.hs===b.s&&b.mt<.7)){const p=pl(t,b.s);p.to++;log(`Offensive three seconds on ${p.n} (${O.short})`);SC.threeSec=(SC.threeSec||0)+1;ball.st='dead';dead('3 seconds',2.3,false);poss(1-t,'oob',{x:H.x-dir*19,y:b.y<25?.5:49.5});return}}else b.pt=0}
+ if(G.ph==='live')for(const b of A[t]){const inP=Math.abs(b.x-H.x)<16.5&&Math.abs(b.y-25)<6.8;
+  if(inP){b.pt=(b.pt||0)+dt;if(b.pt<=dt*1.5)b.aw=R()<.01?2.95:1.2+R()*.9;
+   /* Offensive awareness: non-driving players are coached to clear the paint before the limit. */
+   if(b.pt>2.15&&b.mode!=='drive'&&!(ball.st==='held'&&ball.ht===t&&ball.hs===b.s&&b.mt<.7)){b.pt=0;b.mode='';b.cut=null;b.under=0;const away=b.y<25?-1:1;b.vy=away* Math.max(Math.abs(b.vy||0),1.1);b.dec=Math.max(b.dec||0,.35);}
+   if(b.pt>3&&b.mode==='drive'&&!(ball.st==='held'&&ball.ht===t&&ball.hs===b.s&&b.mt<.7)){const p=pl(t,b.s);p.to++;log(`Offensive three seconds on ${p.n} (${O.short})`);SC.threeSec=(SC.threeSec||0)+1;ball.st='dead';dead('3 seconds',2.3,false);poss(1-t,'oob',{x:H.x-dir*16.5,y:b.y<25?.5:49.5});return}}else b.pt=0}
  const held=ball.st==='held'&&ball.ht===t;
  if(!G.planned&&held&&fc&&A[t][ball.hs].mode!=='drive'){G.planned=true;choosePlan(t)}
  if(!held)return;
@@ -1404,8 +1608,8 @@ function ballStep(dt){
  else if(B.st==='dead'){}}
 function endQ(){
  log('End of '+ql());
- if(q>=4&&T[0].sc!==T[1].sc){captureQuarterStats(q);over=true;paused=true;SFX.buzzer();recordResult();const w=T[0].sc>T[1].sc,L=SZ.league[SZ.me];msg(`<b>Final: ${T[0].short} ${T[0].sc} - ${T[1].sc} ${T[1].short}</b><br>${SZ.gi>=SZ.sched.length&&seriesLine()?seriesLine()+'<br>':''}<br><button onclick="nextGame()">${SZ.gi<SZ.sched.length?'Next game: '+(SZ.sched[SZ.gi].home?'vs ':'at ')+SZ.sched[SZ.gi].opp:postNextLabel()}</button>`);ui();return}
- captureQuarterStats(q);q++;clock=q>4?Math.min(300,QLEN):QLEN;T.forEach(t=>{t.pf=0;t.pl.forEach(p=>p.en=Math.min(100,p.en+(q===3?28:12)))});AI();
+ if(q>=4&&T[0].sc!==T[1].sc){captureQuarterStats(q);over=true;paused=true;hotGameEnd();SFX.buzzer();recordResult();const w=T[0].sc>T[1].sc,L=SZ.league[SZ.me];msg(`<b>Final: ${T[0].short} ${T[0].sc} - ${T[1].sc} ${T[1].short}</b><br>${SZ.gi>=SZ.sched.length&&seriesLine()?seriesLine()+'<br>':''}<br><button onclick="nextGame()">${SZ.gi<SZ.sched.length?'Next game: '+(SZ.sched[SZ.gi].home?'vs ':'at ')+SZ.sched[SZ.gi].opp:postNextLabel()}</button>`);ui();return}
+ captureQuarterStats(q);q++;hotPeriod();clock=q>4?Math.min(300,QLEN):QLEN;T.forEach(t=>{t.pf=0;t.pl.forEach(p=>p.en=Math.min(100,p.en+(q===3?28:12)))});AI();
  ball.st='dead';poss(q>4?q%2:[0,1,1,0][q-1],'q');dead('quarter break',3,true);
  if(simAll)G.hold=false;else{paused=true;msg(`Start of the ${qlong()}.`+'<br><br><button onclick="startTip()">Play</button>')}ui()}
 function checks(){
@@ -1431,11 +1635,14 @@ function draw(tm){
  cx.setTransform(cv.width/94,0,0,cv.width/94,0,0);courtBG(cx,true);
  if(ball.st==='pass'){const b=A[G.off][ball.rs];cx.globalAlpha=.8;cx.setLineDash([.9,.7]);cx.beginPath();cx.moveTo(ball.fx,ball.fy);cx.lineTo(b.x,b.y);cx.stroke();cx.setLineDash([]);cx.globalAlpha=1}
  A.forEach((ag,ti)=>ag.forEach(a=>{const t=T[ti],jump=G.ph==='tip'&&a.s===ord(ti)[4]?Math.sin(cl(ball.tt/(ball.dur||1.15),0,1)*Math.PI)*1.7:0,x=a.x,y=a.y-jump,offn=ti===G.off,hold=ball.st==='held'&&ball.ht===ti&&ball.hs===a.s;
+  const pp=pl(ti,a.s),hot=hotOf(pp)>0,cold=coldOf(pp)>0,streakCol=hot?'#a20202':cold?'#0e37dc':null;
+  /* Hot/cold status is a soft aura around the player icon, not a recolored icon or label. */
+  if(streakCol){cx.save();cx.shadowColor=streakCol;cx.shadowBlur=10;cx.globalAlpha=.95;cx.beginPath();cx.arc(x,y,2.25,0,7);cx.strokeStyle=streakCol;cx.lineWidth=.55;cx.stroke();cx.restore();cx.beginPath();cx.arc(x,y,2.12,0,7);cx.strokeStyle=hot?'rgba(162,2,2,.65)':'rgba(14,55,220,.65)';cx.lineWidth=.22;cx.stroke()}
   cx.beginPath();cx.arc(x,y,1.9,0,7);if(offn){cx.fillStyle=t.col;cx.fill();cx.lineWidth=.2;cx.strokeStyle='#0d1411';cx.stroke()}else{cx.fillStyle='rgba(20,28,24,.45)';cx.fill();cx.lineWidth=.55;cx.strokeStyle=t.col;cx.stroke()}
   if(hold){cx.lineWidth=.25;cx.strokeStyle='#fff';cx.beginPath();cx.arc(x,y,2.5,0,7);cx.stroke()}
   const sp=T[0].plan&&!ti?(T[0].plan.has(T[0].on[a.s])?0:1):0;if(sp){cx.lineWidth=.3;cx.setLineDash([.5,.4]);cx.strokeStyle='#ee5b45';cx.beginPath();cx.arc(x,y,2.8,0,7);cx.stroke();cx.setLineDash([])}
   if(sel!==null&&!ti&&sel===T[0].on[a.s]){cx.lineWidth=.35;cx.strokeStyle='#ffd23f';cx.beginPath();cx.arc(x,y,3.2,0,7);cx.stroke()}
-  cx.fillStyle='#fff';cx.font='700 1.7px "Barlow Condensed",sans-serif';cx.textAlign='center';cx.textBaseline='middle';cx.fillText(pl(ti,a.s).num,x,y+.1);const pp=pl(ti,a.s);/* hover-free court labels; detailed estimates live in Scouting */}));
+  cx.fillStyle='#fff';cx.font='700 1.7px "Barlow Condensed",sans-serif';cx.textAlign='center';cx.textBaseline='middle';cx.fillText(pp.num,x,y+.1);/* hover-free court labels; detailed estimates live in Scouting */}));
  const visual=G.ftVisual&&!G.ftVisual.done?G.ftVisual:null,bx=visual?visual.x:ball.x,by=visual?visual.y:ball.y,bz=visual?Math.sin(Math.min(1,visual.t/visual.dur)*Math.PI)*.5:(ball.st==='held'?Math.abs(Math.sin(tm*9))*.8:ball.z);
  cx.beginPath();cx.arc(bx,by-bz,.85+bz*.12,0,7);cx.fillStyle='#ff7a1a';cx.fill();cx.lineWidth=.15;cx.strokeStyle='#4a1c00';cx.stroke();
  if(flash&&flash.t>0&&flash.s){cx.globalAlpha=Math.min(1,flash.t*2);cx.fillStyle='#fff';cx.font='700 4px "Barlow Condensed",sans-serif';cx.fillText(flash.s,cl(flash.x,12,82),flash.y-(1.1-flash.t)*3);cx.globalAlpha=1}}
@@ -1461,7 +1668,7 @@ function renderPos(){}
 function updRot(){const t=T[0],plan=[...t.plan].sort((a,b)=>POSO[t.pl[a].pos]-POSO[t.pl[b].pos]||t.pl[b].ovr-t.pl[a].ovr),bench=t.pl.map((_,i)=>i).filter(i=>!t.plan.has(i)).sort((a,b)=>t.pl[b].ovr-t.pl[a].ovr);
  const place=(i,y)=>{const e=rowEls[i],p=t.pl[i],on=t.on.includes(i),inP=t.plan.has(i);e.style.transform=`translateY(${y}px)`;
   e.className='r'+(sel===i?' sel':'')+(inP&&!on?' ent':'')+(!inP&&on?' lea':'')+(p.pf>=6?' out':'');
-  e.children[0].textContent=p.pos;e.children[1].innerHTML=`${p.n}<em>${p.ovr}</em>`;const b=e.children[2].firstChild;b.style.width=p.en+'%';b.style.background=p.en<35?'#ee5b45':p.en<60?'#ffd23f':'#58c98b';e.children[3].textContent=p.pf;e.children[4].textContent=p.pts;e.children[5].textContent=inP&&!on?'IN':!inP&&on?'OUT':''};
+  e.children[0].textContent=p.pos;e.children[1].innerHTML=hotName(p);const b=e.children[2].firstChild;b.style.width=p.en+'%';b.style.background=p.en<35?'#ee5b45':p.en<60?'#ffd23f':'#58c98b';e.children[3].textContent=p.pf;e.children[4].textContent=p.pts;e.children[5].textContent=inP&&!on?'IN':!inP&&on?'OUT':''};
  plan.forEach((i,k)=>place(i,k*ROW));bench.forEach((i,k)=>place(i,5*ROW+SEP+k*ROW));$('#sepl').style.transform=`translateY(${5*ROW+2}px)`}
 function rowTap(i){const t=T[0];if(sel===null)sel=i;else if(sel===i)sel=null;else{const a=sel,b=i,pa=t.plan.has(a),pb=t.plan.has(b);
   if(pa!==pb){const out=pa?a:b,inn=pa?b:a;if(t.pl[inn].pf<6){t.plan.delete(out);t.plan.add(inn);if(canSubNow())applyPlan(t);else{const sm=$('#swapMsg');if(sm)sm.textContent='Queued: substitutions happen only at a legal stoppage.'}}sel=null}else{const m=swapPos(0,a,b),sm=$('#swapMsg');if(sm)sm.textContent=m;if(/→/.test(m))log('Coach: '+m);sel=null}}updRot()}
@@ -1487,10 +1694,10 @@ let teamStatsViewIndex=0, quarterStatSnapshots=[];
 function captureQuarterStats(qn){quarterStatSnapshots[qn]=T.map(t=>({sc:t.sc,tf:t.pf||0,pl:t.pl.map(p=>{const o={};for(const k of ['fg','fa','tm','ta','ftm','fta','orb','rb','as','stl','blk','to','pf','pts','min','drb'])o[k]=p[k]||0;return o})}));}
 function quarterTeamView(t,ti,qn){const cur={sc:t.sc,pl:t.pl.map(p=>{const o={};for(const k of ['fg','fa','tm','ta','ftm','fta','orb','rb','as','stl','blk','to','pf','pts','min','drb'])o[k]=p[k]||0;return o})};if(qn==='total')return t;const prev=quarterStatSnapshots[qn-1],end=quarterStatSnapshots[qn];if(!prev && qn>1)return {...t,sc:0,pl:t.pl.map(p=>({...p,fg:0,fa:0,tm:0,ta:0,ftm:0,fta:0,orb:0,rb:0,as:0,stl:0,blk:0,to:0,pf:0,pts:0,min:0,drb:0}))};const base=prev?prev[ti]:{sc:0,pl:cur.pl.map(()=>({}))};const stop=end?end[ti]:cur;return {...t,sc:Math.max(0,stop.sc-base.sc),pl:t.pl.map((p,i)=>{const o={...p};for(const k of ['fg','fa','tm','ta','ftm','fta','orb','rb','as','stl','blk','to','pf','pts','min','drb'])o[k]=Math.max(0,(stop.pl[i][k]||0)-(base.pl[i][k]||0));return o})};}
 function changeTeamStatsView(d){teamStatsViewIndex=perStep(perKeys(),teamStatsViewIndex,d);const el=$('#teamStats');if(el)el.innerHTML=teamStatsHTML();}
-function teamStatsHTML(){const available=perKeys();if(!available.includes(teamStatsViewIndex))teamStatsViewIndex=available[available.length-1];const label=teamStatsViewIndex==='total'?'TOTAL TEAM STATS':perLabel(teamStatsViewIndex);const teams=teamStatsViewIndex==='total'?T:T.map((t,i)=>quarterTeamView(t,i,teamStatsViewIndex));const pfOf=(ti,n)=>quarterStatSnapshots[n]?.[ti]?.tf??(n===q?(T[ti].pf||0):0),foulCount=ti=>{if(teamStatsViewIndex==='total'){let n=0;for(let k=1;k<=q;k++)n+=pfOf(ti,k);return n}return pfOf(ti,teamStatsViewIndex)};const foulMeter=ti=>{const n=foulCount(ti),bonus=teamStatsViewIndex==='total'?inBonus(ti):(teamStatsViewIndex===q&&inBonus(ti))||(teamStatsViewIndex<q&&foulCount(1-ti)>=4);return bonus?'<span class="foul-bonus">BONUS</span>':`<span class="foul-meter" aria-label="${n} team fouls">${[1,2,3,4,5].map(i=>`<i class="${i<=n?'on':''}"></i>`).join('')}</span>`};const S=t=>{const f=k=>t.pl.reduce((x,p)=>x+(p[k]||0),0),fg=f('fg'),fa=f('fa'),tm=f('tm'),ta=f('ta'),ftm=f('ftm'),fta=f('fta'),orb=f('orb'),rb=f('rb'),pc=(m,a)=>a?` (${(100*m/a).toFixed(0)}%)`:' (—)';return{'Points':t.sc,'FG':`${fg}/${fa}${pc(fg,fa)}`,'3PT':`${tm}/${ta}${pc(tm,ta)}`,'FT':`${ftm}/${fta}${pc(ftm,fta)}`,'Off. rebounds':orb,'Def. rebounds':Math.max(0,rb-orb),'Total rebounds':rb,'Assists':f('as'),'Steals':f('stl'),'Blocks':f('blk'),'Turnovers':f('to'),'Fouls':f('pf')}},a=S(teams[0]),b=S(teams[1]);return`<div class="team-stats-head"><button type="button" aria-label="Previous stats period" onclick="changeTeamStatsView(-1)">&lt;</button><h2>${label}</h2><button type="button" aria-label="Next stats period" onclick="changeTeamStatsView(1)">&gt;</button></div><table class="team-stats"><tr><th>${T[0].short}</th><th class="mid"></th><th>${T[1].short}</th></tr>${Object.keys(a).map(k=>`<tr><td>${a[k]}</td><th scope="row" class="mid">${k}</th><td>${b[k]}</td></tr>`).join('')}</table>`}
-function courtBox(){return `<div class="court-pair">`+T.map(t=>`<table class="oc"><caption>${t.short} · ${t.sc}</caption><tr><th class="l">Player</th><th>PTS</th><th>REB</th><th>AST</th><th>STL</th><th>BLK</th><th>TOV</th><th>PF</th></tr>`+t.on.slice(0,5).slice().sort((x,y)=>POSO[t.pl[x].pos]-POSO[t.pl[y].pos]||x-y).map(i=>{const p=t.pl[i];return `<tr><td class="l"><span class="pos">${p.pos}</span> ${p.n}</td><td>${p.pts}</td><td>${p.rb}</td><td>${p.as}</td><td>${p.stl}</td><td>${p.blk}</td><td>${p.to}</td><td${p.pf>=5?' class="warn"':''}>${p.pf}</td></tr>`}).join('')+'</table>').join('')+`</div>`}
+function teamStatsHTML(){const available=perKeys();if(!available.includes(teamStatsViewIndex))teamStatsViewIndex=available[available.length-1];const label=teamStatsViewIndex==='total'?'TOTAL TEAM STATS':perLabel(teamStatsViewIndex);const teamsByIndex=teamStatsViewIndex==='total'?T:T.map((t,i)=>quarterTeamView(t,i,teamStatsViewIndex));/* Match the scoreboard: away team is always left, home team is always right. */const leftTi=1-homeT(),rightTi=homeT(),leftTeam=teamsByIndex[leftTi],rightTeam=teamsByIndex[rightTi];const pfOf=(ti,n)=>quarterStatSnapshots[n]?.[ti]?.tf??(n===q?(T[ti].pf||0):0),foulCount=ti=>{if(teamStatsViewIndex==='total'){let n=0;for(let k=1;k<=q;k++)n+=pfOf(ti,k);return n}return pfOf(ti,teamStatsViewIndex)};const foulMeter=ti=>{const n=foulCount(ti),bonus=teamStatsViewIndex==='total'?inBonus(ti):(teamStatsViewIndex===q&&inBonus(ti))||(teamStatsViewIndex<q&&foulCount(1-ti)>=4);return bonus?'<span class="foul-bonus">BONUS</span>':`<span class="foul-meter" aria-label="${n} team fouls">${[1,2,3,4,5].map(i=>`<i class="${i<=n?'on':''}"></i>`).join('')}</span>`};const S=t=>{const f=k=>t.pl.reduce((x,p)=>x+(p[k]||0),0),fg=f('fg'),fa=f('fa'),tm=f('tm'),ta=f('ta'),ftm=f('ftm'),fta=f('fta'),orb=f('orb'),rb=f('rb'),pc=(m,a)=>a?` (${(100*m/a).toFixed(0)}%)`:' (—)';return{'Points':t.sc,'FG':`${fg}/${fa}${pc(fg,fa)}`,'3PT':`${tm}/${ta}${pc(tm,ta)}`,'FT':`${ftm}/${fta}${pc(ftm,fta)}`,'Off. rebounds':orb,'Def. rebounds':Math.max(0,rb-orb),'Total rebounds':rb,'Assists':f('as'),'Steals':f('stl'),'Blocks':f('blk'),'Turnovers':f('to'),'Fouls':f('pf')}},a=S(leftTeam),b=S(rightTeam);return`<div class="team-stats-head"><button type="button" aria-label="Previous stats period" onclick="changeTeamStatsView(-1)">&lt;</button><h2>${label}</h2><button type="button" aria-label="Next stats period" onclick="changeTeamStatsView(1)">&gt;</button></div><table class="team-stats"><tr><th>${T[leftTi].short}</th><th class="mid"></th><th>${T[rightTi].short}</th></tr>${Object.keys(a).map(k=>`<tr><td>${a[k]}</td><th scope="row" class="mid">${k}</th><td>${b[k]}</td></tr>`).join('')}</table>`}
+function courtBox(){return `<div class="court-pair">`+T.map(t=>`<table class="oc"><caption>${t.short} · ${t.sc}</caption><tr><th class="l">Player</th><th>PTS</th><th>REB</th><th>AST</th><th>STL</th><th>BLK</th><th>TOV</th><th>PF</th></tr>`+t.on.slice(0,5).slice().sort((x,y)=>POSO[t.pl[x].pos]-POSO[t.pl[y].pos]||x-y).map(i=>{const p=t.pl[i];return `<tr><td class="l"><span class="pos">${p.pos}</span>${hotTag(p,1)} ${p.n}</td><td>${p.pts}</td><td>${p.rb}</td><td>${p.as}</td><td>${p.stl}</td><td>${p.blk}</td><td>${p.to}</td><td${p.pf>=5?' class="warn"':''}>${p.pf}</td></tr>`}).join('')+'</table>').join('')+`</div>`}
 function buildOppRot(){const el=$('#oppRot');el.innerHTML='';T[1].pl.forEach((p,i)=>{const e=document.createElement('div');e.className='r';e.dataset.i=i;e.innerHTML='<span class="pp"></span><span class="nn"></span><span class="eb"><i></i></span><span class="pf"></span><span class="pt"></span><span class="tg"></span>';el.appendChild(e)});el.style.height=(T[1].pl.length*ROW+SEP)+'px';updOppRot()}
-function updOppRot(){if(!T||!T[1]||!$('#oppRot').children.length)return;const t=T[1],plan=[...t.plan].sort((a,b)=>POSO[t.pl[a].pos]-POSO[t.pl[b].pos]||t.pl[b].ovr-t.pl[a].ovr),bench=t.pl.map((_,i)=>i).filter(i=>!t.plan.has(i)).sort((a,b)=>t.pl[b].ovr-t.pl[a].ovr);const place=(i,y)=>{const e=$(`#oppRot .r[data-i="${i}"]`),p=t.pl[i],on=t.on.includes(i),inP=t.plan.has(i);e.style.transform=`translateY(${y}px)`;e.className='r'+(oppSel===i?' sel':'')+(inP&&!on?' ent':'')+(!inP&&on?' lea':'')+(p.pf>=6?' out':'');e.children[0].textContent=p.pos;e.children[1].innerHTML=`${p.n}<em>${p.ovr}</em>`;const b=e.children[2].firstChild;b.style.width=p.en+'%';b.style.background=p.en<35?'#ee5b45':p.en<60?'#ffd23f':'#58c98b';e.children[3].textContent=p.pf;e.children[4].textContent=p.pts;e.children[5].textContent=inP&&!on?'IN':!inP&&on?'OUT':''};plan.forEach((i,k)=>place(i,k*ROW));bench.forEach((i,k)=>place(i,5*ROW+SEP+k*ROW))}
+function updOppRot(){if(!T||!T[1]||!$('#oppRot').children.length)return;const t=T[1],plan=[...t.plan].sort((a,b)=>POSO[t.pl[a].pos]-POSO[t.pl[b].pos]||t.pl[b].ovr-t.pl[a].ovr),bench=t.pl.map((_,i)=>i).filter(i=>!t.plan.has(i)).sort((a,b)=>t.pl[b].ovr-t.pl[a].ovr);const place=(i,y)=>{const e=$(`#oppRot .r[data-i="${i}"]`),p=t.pl[i],on=t.on.includes(i),inP=t.plan.has(i);e.style.transform=`translateY(${y}px)`;e.className='r'+(oppSel===i?' sel':'')+(inP&&!on?' ent':'')+(!inP&&on?' lea':'')+(p.pf>=6?' out':'');e.children[0].textContent=p.pos;e.children[1].innerHTML=hotName(p);const b=e.children[2].firstChild;b.style.width=p.en+'%';b.style.background=p.en<35?'#ee5b45':p.en<60?'#ffd23f':'#58c98b';e.children[3].textContent=p.pf;e.children[4].textContent=p.pts;e.children[5].textContent=inP&&!on?'IN':!inP&&on?'OUT':''};plan.forEach((i,k)=>place(i,k*ROW));bench.forEach((i,k)=>place(i,5*ROW+SEP+k*ROW))}
 function oppRowTap(i){const t=T[1];if(oppSel===null)oppSel=i;else if(oppSel===i)oppSel=null;else{const a=oppSel,b=i,pa=t.plan.has(a),pb=t.plan.has(b);if(pa!==pb){const out=pa?a:b,inn=pa?b:a;if(t.pl[inn].pf<6){t.plan.delete(out);t.plan.add(inn);if(canSubNow())applyPlan(t);else{const sm=$('#swapMsg');if(sm)sm.textContent='Queued: substitutions happen only at a legal stoppage.'}}oppSel=null}else oppSel=i}updOppRot()}
 
 function renderScouting(){const selEl=$('#scoutPlayer'),card=$('#scoutCard');if(!selEl||!card||!T)return;const all=T.flatMap((t,ti)=>t.pl.map((p,i)=>({p,ti,i,t})));const old=selEl.value;selEl.innerHTML=all.map(({p,ti,i,t})=>`<option value="${ti}:${i}">${t.short} · ${p.n} (${p.pos})</option>`).join('');if(old&&[...selEl.options].some(o=>o.value===old))selEl.value=old;const [ti,idx]=(selEl.value||'0:0').split(':').map(Number),p=T[ti].pl[idx],a=p.attr;const groups=[['Athleticism',[['Speed',a.speed],['Acceleration',a.accel],['Agility',a.agility],['Strength',a.strength],['Vertical',a.vertical],['Stamina',a.stamina]],],['IQ & effort',[['Basketball IQ',a.iq],['Anticipation',a.anticipation],['Hustle',a.hustle],['Loose-ball pursuit',a.loose]],],['Skills',[['Handle',a.handle],['Finishing',a.finish],['Perimeter defense',a.perimeter],['Interior defense',a.interior],['Screen navigation',a.screen],['Offensive rebounding',a.oreb],['Defensive rebounding',a.dreb]]]];card.innerHTML=`<div style="font-weight:700;margin:8px 0">${p.n} · ${p.pos} · OVR ${p.ovr}</div><div class="dim" style="font-size:11px;margin-bottom:8px">${p.attrSource}</div>`+groups.map(([name,rows])=>`<div style="font-size:12px;font-weight:700;margin:9px 0 4px">${name}</div>`+rows.map(([label,v])=>`<div style="display:grid;grid-template-columns:1fr 28px;gap:8px;margin:4px 0;font-size:11px"><span>${label}<span style="display:block;background:#25362f;height:4px;border-radius:4px;margin-top:3px"><i style="display:block;width:${v}%;height:4px;background:${v>=85?'#58c98b':v<60?'#e8a34a':'#a3b5aa'};border-radius:4px"></i></span></span><b style="text-align:right">${v}</b></div>`).join('')).join('');}
@@ -1519,7 +1726,7 @@ const rotEl=$('#rot');if(rotEl)rotEl.onpointerdown=e=>{const r=e.target.closest(
 $('#sfxBtn').onclick=()=>{const on=SFX.toggle();SFX.unlock();$('#sfxBtn').textContent=on?'🔊 Sound':'🔇 Muted';$('#sfxBtn').setAttribute('aria-pressed',on)};$('#pp').onclick=()=>{SFX.unlock();if(over)return;paused=!paused;if(!paused){msg('');if(G.ph==='dead'&&G.hold)G.hold=false}ui()};
 document.querySelectorAll('[data-sp]').forEach(b=>b.onclick=()=>{speed=+b.dataset.sp;ui()});
 document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{tab=+b.dataset.tab;ui()});
-$('#to').onclick=()=>{const t=T[0];if(over||t.to<1)return;if(G.ph==='dead'){t.to--;t.pl.forEach((p,i)=>{if(t.on.includes(i))p.en=Math.min(100,p.en+18)});run={t:-1,p:0};G.hold=true;paused=true;log('Timeout, '+t.short);openPlays()}else{G.toQ=true;tip('to'+Math.round(clock),'Timeout requested. It can reset the offense, recover energy, and stop a scoring run at the next stoppage.')}ui()};
+$('#to').onclick=()=>{const t=T[0];if(over||t.to<1)return;if(G.ph==='dead'){t.to--;t.pl.forEach((p,i)=>{if(t.on.includes(i))p.en=Math.min(100,p.en+18)});run={t:-1,p:0};G.hold=true;paused=true;log('Timeout, '+t.short);hotTimeout(0);coldTimeout(0);openPlays()}else{G.toQ=true;tip('to'+Math.round(clock),'Timeout requested. It can reset the offense, recover energy, and stop a scoring run at the next stoppage.')}ui()};
 $('#pbook').onclick=e=>{const b=e.target.closest('.pb');if(b)selPlay(PL.find(p=>p.n===b.dataset.n))};
 $('#pshoot').onchange=e=>{PS.S=+e.target.value;TL=tlBuild(PS.p,PS.S);ptm=0};
 $('#prun').onclick=()=>{const p=PS.p,S=PS.S;T[0].nextPlay={p,S};if(G.off===0&&G.ph==='dead')G.planned=false;log(G.off===0?`${T[0].short} will execute "${p.n}" after the timeout`:`Queued "${p.n}" for our next possession`);closePlays();msg('Timeout.'+'<br><br><button onclick="startTip()">Play</button>')};
@@ -1737,7 +1944,7 @@ function mvpHTML(){const top=mvpLadder(),done=SZ.gi>=SZ.sched.length,m=SZ.mvp,hi
 function statsScreenHTML(){if(!SZ)return'<div class="dim">Start a season first.</div>';const v=statView();
  return vnavHTML('s')+(v==='team'?teamStatsView():v==='player'?playerStatsView():v==='mvp'?mvpHTML():standingsHTML())}
 function renderScreens(){if(!SZ||!['games','stats','roster','settings'].includes(activeScreen))return;const P=SZ.po,k=[activeScreen,XS.v,gv,SZ.res.length,SZ.gi,(SZ.pv||0)+'.'+(SZ.pg?1:0)+'.'+(SZ.pi?1:0)+'.'+(SZ.watch||0)+(SZ.po&&SZ.po.champ?'c':'')].join('|'),el=$('#scr'+activeScreen);if(el.dataset.k===k)return;el.dataset.k=k;el.innerHTML=activeScreen==='games'?gamesScreen():activeScreen==='stats'?statsScreenHTML():activeScreen==='settings'?settingsHTML():rosterHTML()}
-function settingsHTML(){const d=SZ.diff||'Pro',q=SZ.qmin||12;return`<h2>Settings</h2><div class="setr"><label for="setDiff">Difficulty</label><select id="setDiff" onchange="setDiff(this.value)">${Object.keys(DIFF).map(k=>`<option${k===d?' selected':''}>${k}</option>`).join('')}</select><div class="dim">${(DIFF[d]||{}).desc||''}</div><label for="setQ">Minutes per quarter</label><select id="setQ" onchange="setQ(+this.value)">${[12,10,8,6,4,2,1].map(m=>`<option value="${m}"${m===q?' selected':''}>${m} min</option>`).join('')}</select><div class="dim">Difficulty applies from the next game. Quarter length applies immediately before tip-off, otherwise from the next quarter.</div></div>`}
+function settingsHTML(){const d=SZ.diff||'Pro',q=SZ.qmin||12;return`<h2>Settings</h2><div class="setr"><label for="setDiff">Difficulty</label><select id="setDiff" onchange="setDiff(this.value)">${Object.keys(DIFF).map(k=>`<option${k===d?' selected':''}>${k}</option>`).join('')}</select><div class="dim">${(DIFF[d]||{}).desc||''}</div><label for="setQ">Minutes per quarter</label><select id="setQ" onchange="setQ(+this.value)">${[12,10,8,6,4,2,1].map(m=>`<option value="${m}"${m===q?' selected':''}>${m} min</option>`).join('')}</select><div class="dim">Difficulty applies from the next game. Quarter length applies immediately before tip-off, otherwise from the next quarter.</div></div>`+hotSettingsHTML()}
 function setDiff(v){if(!DIFF[v])return;SZ.diff=v;SEL.diff=v;saveSZ();XS.v++;ui()}
 function setQ(m){const old=QLEN;SZ.qmin=m;QLEN=m*60;if(G&&G.tipPending&&!G.tipStarted&&q===1&&clock===old){clock=QLEN;G.lastCpuScoreClock=QLEN}saveSZ();XS.v++;ui()}
 applyScreen();
