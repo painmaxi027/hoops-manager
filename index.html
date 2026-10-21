@@ -363,6 +363,11 @@ th.srt{cursor:pointer;user-select:none;white-space:nowrap}th.srt:hover,th.srt:fo
 .team-stats-head h2{justify-content:center;text-align:center;width:100%}
 #teamPanel{text-align:center}
 @media(max-width:900px){.gm-card,#fbm .fbc{padding:12px}.gm-box table{min-width:480px}}
+/* ---- Coaching defaults card: sits between the settings and the assistant coach ---- */
+.app.sc>aside>#cdPanel{grid-column:2 / span 2;grid-row:3;min-width:0}.app.sc>aside>#coachPanel{grid-row:4}
+#cdPanel .bar{display:flex;gap:8px;flex-wrap:wrap}
+@media(max-width:1100px){.app.sc>aside>#cdPanel{grid-column:1 / -1;grid-row:4}.app.sc>aside>#coachPanel{grid-row:5}}
+@media(max-width:720px){.app.sc>aside>#cdPanel,.app.sc>aside>#coachPanel{grid-column:1;grid-row:auto}}
 
 /* ---- v5 roster workspace: wider panel and readable position controls ---- */
 .app.sg[data-screen=roster]{width:100%;max-width:none;margin:0;padding:12px clamp(12px,2vw,32px)}
@@ -780,7 +785,8 @@ body.setonly #gnav .brand:after{content:" \00b7  Settings";font-size:13px;color:
    <label>Rebounding / transition balance</label><select id="rebstrat"><option value="auto">No Preference (personnel-based)</option><option value="back1">Limit Transition (1 rebounder)</option><option value="bal2">Some Crash / Others Get Back (2)</option><option value="crash3">Crash Offensive Glass (3)</option></select>
    <label class="ck"><input type="checkbox" id="auto"> Auto-sub tired players</label>
  </section>
-  <section class="card" id="coachPanel"><h2>Assistant coach</h2><ul id="tips"></ul></section>
+ <section class="card" id="cdPanel"><h2>Coaching defaults</h2><div class="dim" style="font-size:12px;line-height:1.4">Save the offense, defense, tempo, pressure, coverage, rebounding and auto-sub settings above as your defaults, so every future game starts with them. Change them again any time, for example after finding a better system mid-season.</div><div class="bar" style="margin-top:8px"><button type="button" id="coachDefSave" title="Use the current coaching settings at the start of every future game">Save current as default</button><button type="button" id="coachDefReset" title="Go back to the original defaults">Reset to original</button></div><div id="coachDefMsg" class="dim" aria-live="polite" style="margin-top:6px;font-size:12px"></div></section>
+ <section class="card" id="coachPanel"><h2>Assistant coach</h2><ul id="tips"></ul></section>
  <div id="legacySides" hidden><div id="side0"><div id="courtbox"></div></div><div id="side2" class="hide"><div class="dim" style="margin-bottom:6px">Opponent rotation (queued changes take effect at the next dead ball).</div><div class="rh"><span></span><span>Player</span><span>Energy (%)</span><span>PF</span><span>Pts</span><span></span></div><div id="oppRot" class="rotl"></div></div><div id="side3" class="hide"><div class="dim" style="margin-bottom:6px">Estimated player attributes · ratings are gameplay estimates, not verified tracking data.</div><label>Player</label><select id="scoutPlayer"></select><div id="scoutCard"></div></div></div>
 </aside>
 </div>
@@ -1652,7 +1658,12 @@ function screenContact(sc){
  sc.res=res;SC[res]=(SC[res]||0)+1;
  if(res==='switch')[G.dm[dh],G.dm[ds]]=[G.dm[ds],G.dm[dh]];else if(res==='under')dd.under=1.4;else if(res==='over'||res==='trail')dd.slow=res==='over'?.8:1}
 var SC={};
-function applyDefaultPlan(t){Object.assign(t,{style:'four',tempo:cl(Math.round(((t.ts&&t.ts.pace)||1)*3),2,5),shotprofile:teamShotProfile(t.ts),def:'man',gam:50,cov:'drop',emph:'star',rebstrat:'auto',gameplan:'balanced',auto:false,drive:true})}
+function applyDefaultPlan(t){Object.assign(t,{style:'four',tempo:cl(Math.round(((t.ts&&t.ts.pace)||1)*3),2,5),shotprofile:teamShotProfile(t.ts),def:'man',gam:50,cov:'drop',emph:'star',rebstrat:'back1',gameplan:'balanced',auto:false,drive:true})}
+/* User coaching defaults (saved in the season save, like the default lineup): applied on top of the built-in defaults at the start of every game. */
+const COACH_KEYS=['style','tempo','shotprofile','def','cov','gam','emph','rebstrat','gameplan','auto','drive'];
+function applyCoachDefaults(t){const d=SZ&&SZ.coachDef;if(!d||typeof d!=='object')return;COACH_KEYS.forEach(k=>{if(d[k]!==undefined&&d[k]!==null)t[k]=d[k]})}
+function saveCoachDefaults(){const t=T&&T[0],m=$('#coachDefMsg');if(!t||!SZ)return;const d={};COACH_KEYS.forEach(k=>{d[k]=t[k]});SZ.coachDef=d;saveSZ();if(m)m.textContent=SZ.quick?'Saved for this quick-game session (quick games are not stored in a season save).':'Saved. Every future game starts with these coaching settings.'}
+function resetCoachDefaults(){const m=$('#coachDefMsg');if(!SZ)return;delete SZ.coachDef;saveSZ();if(m)m.textContent='Reset. New games start with the original defaults (Limit Transition rebounding). The current game keeps its settings.'}
 const XS={v:0,gsel:null,rt:'ATL',rs:'ovr',rd:-1,ss:'pts',sd:-1,st:'ALL'},RC={};
 function showOpponentTimeout(){const m=$('#timeoutm');if(!m||FAST||simAll)return;$('#timeoutTitle').textContent=`${T[1].short} timeout`;$('#timeoutResume').textContent='Resume game';{const c=$('#timeoutCoach');if(c)c.classList.remove('hide')}   /* the coaching button is hidden in the post-coaching summary view; every new timeout must bring it back */$('#timeoutBody').innerHTML=`${T[1].name} called a timeout. Your queued substitutions have been applied, and you can still adjust your lineup before play resumes.`;m.classList.remove('hide');}
 function showOwnTimeout(){const m=$('#timeoutm');if(!m||FAST||simAll)return;msg('');$('#timeoutTitle').textContent=`${T[0].short} timeout`;$('#timeoutBody').innerHTML=`${T[0].name} called a timeout. ${T[0].nextPlay?`The set "${T[0].nextPlay.p.n}" is queued for the next possession. `:''}You can make substitutions and adjust your lineup before play resumes.`;$('#timeoutCoach').classList.remove('hide');$('#timeoutResume').textContent='Resume game';m.classList.remove('hide')}
@@ -1662,7 +1673,7 @@ function init(){
  if(XS._me!==SZ.me){XS._me=SZ.me;XS.pf=SZ.me;XS.rt=SZ.me;XS.v++}
  const g=curGame()||{opp:TEAM_NAMES.find(t=>t[0]!==SZ.me)[0],home:true};SEL.me=SZ.me;SEL.opp=g.opp;SEL.diff=SZ.diff;
  const c0=TEAM_COLORS[SEL.me][0],c1=cdist(c0,TEAM_COLORS[SEL.opp][0])<110?TEAM_COLORS[SEL.opp][1]:TEAM_COLORS[SEL.opp][0];
- T=[mkTeam(SEL.me,c0),mkTeam(SEL.opp,c1)];T.hm=g.home?0:1;T.forEach(tm=>tm.pl.forEach(p=>{p.cs=0;p.cm=0}));SCOUT={};applyDefaultPlan(T[0]);applyDefaultLineup(T[0]);T.forEach(t=>{t.plan=new Set(t.on);t.starters=new Set(t.on)});T[0].nextPlay=null;hotResetAll('game');
+ T=[mkTeam(SEL.me,c0),mkTeam(SEL.opp,c1)];T.hm=g.home?0:1;T.forEach(tm=>tm.pl.forEach(p=>{p.cs=0;p.cm=0}));SCOUT={};applyDefaultPlan(T[0]);applyCoachDefaults(T[0]);applyDefaultLineup(T[0]);T.forEach(t=>{t.plan=new Set(t.on);t.starters=new Set(t.on)});T[0].nextPlay=null;hotResetAll('game');
  QLEN=((SZ&&SZ.qmin)||10)*60;q=1;teamStatsViewIndex='total';quarterStatSnapshots=[];clock=QLEN;over=false;paused=true;speed=0;sel=null;tab=1;sideTab=1;oppSel=null;simAll=false;acc=0;run={t:-1,p:0};tips=[];logs=[];pbq=null;_pbk='';_pbs='';_pbn=0;logN=0;tipF={};flash=null;subLog=[];PS.p=null;closePlays();
  A=[0,1].map(t=>[0,1,2,3,4].map(s=>({t,s,x:47,y:25,vx:0,vy:0,mode:'',mt:0,dec:0,cut:null,slow:0,wy:0,dy:0})));
  ball={st:'tip',x:47,y:25,ht:0,hs:0,tt:0,dur:1.15,z:0};G={ph:'dead',hold:true,off:0,timer:1.15,why:'opening tip',tipPending:true,tipStarted:false,tipWinner:R()<.5?0:1,lastCpuScoreClock:QLEN};AI();
@@ -3010,6 +3021,7 @@ $('#start').style.pointerEvents='auto';document.querySelectorAll('#start button,
 $('#tempo').oninput=e=>{T[0].tempo=+e.target.value;ui()};$('#gam').oninput=e=>{T[0].gam=+e.target.value;ui()};$('#shotprofile').onchange=e=>{T[0].shotprofile=e.target.value;ui()};$('#gameplan').onchange=e=>{T[0].gameplan=e.target.value;ui()};$('#hackBtn').onclick=()=>{T[0].hack=!T[0].hack;ui()};$('#emph').onchange=e=>{T[0].emph=e.target.value;ui()};$('#rebstrat').onchange=e=>{T[0].rebstrat=e.target.value;ui()};document.querySelectorAll('[data-side]').forEach(b=>b.onclick=()=>{sideTab=+b.dataset.side;ui()});const oppRotEl=$('#oppRot');if(oppRotEl)oppRotEl.onpointerdown=e=>{const r=e.target.closest('.r');if(r)oppRowTap(+r.dataset.i)};
 ['style','def','cov'].forEach(id=>$('#'+id).onchange=e=>{T[0][id]=e.target.value;ui();try{zeSync()}catch(_){}});$('#auto').onchange=e=>T[0].auto=e.target.checked;
 $('#drvOn').onchange=e=>{T[0].drive=e.target.checked};
+$('#coachDefSave').onclick=saveCoachDefaults;$('#coachDefReset').onclick=resetCoachDefaults;
 /* ---- Player shot locations: current-game panel + persistent Defaults editor ---- */
 let _slKey='',_slRows=[];
 const SLHD='<div class="slr slhd" aria-hidden="true"><span>1st choice</span><span>2nd choice</span><span>3rd choice</span></div>';
