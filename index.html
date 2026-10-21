@@ -2829,7 +2829,7 @@ function ballStep(dt){
 function endQ(){
  log('End of '+ql());
  if(q>=4&&T[0].sc!==T[1].sc){captureQuarterStats(q);over=true;paused=true;hotGameEnd();SFX.buzzer();recordResult();const w=T[0].sc>T[1].sc,L=SZ.league[SZ.me];msg(`<b>Final: ${T[0].short} ${T[0].sc} - ${T[1].sc} ${T[1].short}</b><br>${!SZ.quick&&SZ.gi>=SZ.sched.length&&seriesLine()?seriesLine()+'<br>':''}<br><button onclick="${SZ.quick?'openQuickSetup()':'nextGame()'}">${SZ.quick?'New quick game':SZ.gi<SZ.sched.length?'Next game: '+(SZ.sched[SZ.gi].home?'vs ':'at ')+SZ.sched[SZ.gi].opp:postNextLabel()}</button>`);ui();return}
- captureQuarterStats(q);q++;hotPeriod();clock=q>4?Math.min(300,QLEN):QLEN;if(q===3)T.forEach(t=>{if(t.to<7)t.to=Math.min(7,t.to+1)});T.forEach(t=>{t.pf=0;t.pl.forEach(p=>p.en=Math.min(100,p.en+(q===3?28:12)))});AI();
+ captureQuarterStats(q);q++;hotPeriod();clock=q>4?Math.min(300,QLEN):QLEN;if(q===3)T.forEach(t=>{if(t.to<7)t.to=Math.min(7,t.to+1)});if(q>4)T.forEach(t=>{t.to=Math.min(7,t.to+2)});   /* every overtime period: 2 additional timeouts per team (7 max) */T.forEach(t=>{t.pf=0;t.pl.forEach(p=>p.en=Math.min(100,p.en+(q===3?28:12)))});AI();
  ball.st='dead';poss(q>4?q%2:[0,1,1,0][q-1],'q');dead('quarter break',3,true);
  if(simAll)G.hold=false;else{paused=true;msg(`Start of the ${qlong()}.`+'<br><br><button onclick="startTip()">Play</button>')}ui()}
 function checks(){
