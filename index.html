@@ -692,7 +692,7 @@ button.hadv{background:linear-gradient(180deg,#ffe27a,var(--gold));color:#16221e
 .keys b{background:#1b1d26;border-color:#454a5c}
 body.rosterview #gnav .brand:after{content:none!important}
 body.setonly .gtabs,body.setonly #gburger,body.setonly #gcur{display:none!important}
-body.setonly #gnav .brand:after{content:" \00b7  Settings";font-size:13px;color:var(--gold)}
+body.setonly #gnav .brand:after{content:none}
 #pb{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:14px;overflow:auto}
 #pb .pbc{width:min(980px,100%);display:flex;flex-direction:column;gap:12px}
 #pb .pbg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
@@ -704,10 +704,107 @@ body.setonly #gnav .brand:after{content:" \00b7  Settings";font-size:13px;color:
 #pb .pbo label{margin:0}#pb .pbo select{width:auto;min-width:240px}
 .bk.pm{min-width:1000px;grid-template-columns:repeat(3,minmax(0,1fr)) minmax(0,1.2fr) repeat(3,minmax(0,1fr))}
 .bk.pm .bk-conf{grid-column:1/3}.bk.pm .bk-title{grid-column:3/6}.bk.pm .bk-conf.bk-e{grid-column:6/8}
+/* BACK ARROW (upper left): one button for Roster, Settings, Quick game, Season and Playoffs setup. Shown by CSS only. */
+#homeBack{display:none;position:fixed;left:12px;top:7px;z-index:10001;width:46px;height:34px;padding:0;align-items:center;justify-content:center;color:#16221e!important;background:var(--gold)!important;border:0;clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%);cursor:pointer}
+#homeBack:hover,#homeBack:focus-visible{filter:brightness(1.12)}
+body.rosterview #homeBack,body.setonly #homeBack,body:has(#qg:not(.hide)) #homeBack,body:has(#pb:not(.hide)) #homeBack,body:has(#start:not(.hide)) #homeBack{display:flex}
+body.rosterview #gnav,body.setonly #gnav{padding-left:70px}
+/* FULL-SCREEN PAGES: Quick game, Season and Playoffs fill the whole window like Roster and Settings (no centered modal card). */
+#qg,#pb,#start{padding:0!important;align-items:stretch!important;justify-content:stretch!important;overflow:auto}
+#qg .qgc,#pb .pbc,#start>.card{width:100%!important;max-width:none!important;min-height:100%;height:auto;margin:0;border:0!important;border-top:4px solid var(--gold)!important;box-shadow:none!important;border-radius:0;clip-path:none!important;background:transparent!important;padding:72px clamp(16px,6vw,90px) 36px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
+#qg .qgc>*{width:min(1000px,100%)}
+#pb .pbc>*{width:min(1000px,100%)}
+#start>.card>*{width:min(460px,100%)}
+#start>.card>.bar{justify-content:center}
+/* MAXIMIZED full-screen layouts: bigger type, logos and controls that scale with the window. */
+#start>.card,#qg .qgc,#pb .pbc{gap:clamp(14px,3vh,34px);padding-top:64px}
+#start>.card>*,#start>.card>.sfs{width:min(1300px,100%)}
+#start>.card{text-align:center;align-items:center}
+#start h1{font-size:clamp(64px,13vh,140px);margin:0}#start h1:before{margin:0 auto 12px}
+#start>.card>.dim{font-size:clamp(16px,2.4vh,24px)}
+#start .sfs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(16px,3vw,48px);text-align:left}
+#start .sf label{font-size:clamp(13px,1.9vh,18px)}
+#start select,#pb select,#qg select{font-size:clamp(16px,2.4vh,22px);padding:clamp(10px,1.8vh,18px) 14px}
+#start #contInfo{font-size:clamp(15px,2.2vh,22px);margin:0}
+#start .bar,#qg .bar,#pb .bar{gap:16px}
+#start .bar button,#qg .bar button,#pb .bar button{font-size:clamp(18px,3vh,28px);padding:clamp(12px,2vh,22px) clamp(28px,4vw,64px)}
+#qg .qgc>*{width:min(1500px,100%)}
+#qg h2{font-size:clamp(34px,6vh,64px);justify-content:center}
+#qg .qgt{gap:clamp(12px,3vw,60px)}
+.qs img{width:clamp(120px,27vh,320px);height:clamp(120px,27vh,320px)}
+.qs .city{font-size:clamp(18px,3vh,34px)}
+.qs .nick{font-size:clamp(44px,12vh,140px)}
+.qs .tag{font-size:clamp(14px,2vh,22px)}
+.qs .pick{max-width:min(520px,100%)}
+.qvs{font-size:clamp(34px,6vh,64px)}
+#qgHint{font-size:clamp(15px,2.3vh,22px)}
+#pb .pbc>*{width:min(1500px,100%)}
+#pb h2{font-size:clamp(34px,6vh,64px);justify-content:center}
+#pb .pbc>.dim{font-size:clamp(15px,2.3vh,22px)}
+#pb .pbg{gap:clamp(20px,5vw,80px)}
+#pb h3{font-size:clamp(22px,4vh,38px);margin-bottom:clamp(6px,1.4vh,14px)}
+#pb .pbr{gap:12px;margin-bottom:clamp(5px,1vh,10px)}#pb .pbr b{width:30px;font-size:clamp(16px,2.4vh,24px)}
+#pb .pbo{gap:clamp(10px,2vw,30px)}#pb .pbo label{font-size:clamp(13px,2vh,18px)}#pb .pbo select{min-width:clamp(240px,24vw,400px)}
+@media(max-width:900px){#start .sfs{grid-template-columns:1fr}}
+#start>.card,#qg .qgc,#pb .pbc{justify-content:safe center}
+#pb .pbc{padding-top:56px;padding-bottom:20px;gap:clamp(8px,1.6vh,16px)}
+#pb h2{margin:0;font-size:clamp(30px,5vh,56px)}
+#pb select{font-size:clamp(15px,2.1vh,20px);padding:clamp(5px,.9vh,10px) 12px}
+#pb .pbr{margin-bottom:clamp(3px,.6vh,6px)}
+#pb h3{margin-bottom:clamp(4px,.8vh,10px)}
+#pb .bar button{font-size:clamp(16px,2.6vh,24px);padding:clamp(8px,1.4vh,16px) clamp(24px,3vw,48px)}
+/* One shared page title, centred at the very top, for Quick game / Season / Playoffs / Roster / Settings. */
+#pageTitle{display:none;position:fixed;left:50%;top:0;transform:translateX(-50%);height:48px;align-items:center;z-index:10001;pointer-events:none;font:800 italic clamp(24px,4vh,34px) 'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:2px;color:#fff;white-space:nowrap}
+#pageTitle:before{content:"";width:10px;height:22px;background:var(--gold);transform:skewX(-20deg);margin-right:12px}
+body.rosterview #pageTitle,body.setonly #pageTitle,body:has(#qg:not(.hide)) #pageTitle,body:has(#pb:not(.hide)) #pageTitle,body:has(#start:not(.hide)) #pageTitle{display:flex}
+#start h1,#qg h2,#pb h2{display:none!important}
+body.quick #gnav .brand:after{content:none!important}
+/* Season: team picker like Quick game, then difficulty + number of games below */
+#start .ssteam{width:min(560px,100%);cursor:default;background:none;border-color:transparent;clip-path:none}#start .ssteam:hover{background:none}
+#start .ssteam img{width:clamp(100px,22vh,260px);height:clamp(100px,22vh,260px)}
+#start .ssteam .nick{font-size:clamp(40px,10vh,110px)}
+#start .sfs{grid-template-columns:repeat(2,minmax(0,1fr));width:min(900px,100%)}
+/* Playoffs bracket setup: dropdown inside every team slot, logo icon beside it */
+#pb .bk-wrap{width:min(1500px,100%)}#pb .bk{min-width:1180px}
+#pb .bk-t.pbt{gap:6px}#pb .bk-t.pbt.me{border-color:var(--gold)}
+#pb .bk-t select{flex:1;min-width:0;width:100%;border:0!important;box-shadow:none!important;background:transparent!important;color:#fff!important;font:700 15px 'Barlow Condensed',sans-serif;letter-spacing:.03em;padding:2px 0!important;cursor:pointer}
+#pb .bk-t select option{background:#12141a;color:#fff}
+#start .ssteam img{width:clamp(90px,17vh,200px);height:clamp(90px,17vh,200px)}
+#start .ssteam .nick{font-size:clamp(36px,8vh,90px)}#start .ssteam .city{font-size:clamp(16px,2.4vh,26px)}
+#start>.card{gap:clamp(8px,1.6vh,20px)}#start #diffDesc{min-height:0!important}
+#start>.card>.dim:not(#contInfo){display:none}
+#pb .pbc{padding-left:14px;padding-right:14px}#pb .bk-wrap{padding:10px 8px}#pb .bk{min-width:1160px;column-gap:8px}
+#pb .bk-t select{appearance:none;-webkit-appearance:none;font-size:14px;padding:2px 12px 2px 0!important;background:transparent url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M1 1l4 4 4-4' fill='none' stroke='%23ffd21f' stroke-width='1.6'/></svg>") no-repeat right center!important}
+#pb .bk-t.pbt .bk-s{font-size:9px}
+#pb .bk-t select{font-size:13px;letter-spacing:0}#pb .bk-t.pbt{gap:4px;padding:4px 5px}#pb .bk-t.pbt .bk-lg{width:18px;height:18px}
+/* sizing pass: smaller selects/buttons shared by Season, Quick game and Playoffs; bigger Season logo */
+#start .bar button,#qg .bar button,#pb .bar button{font-size:clamp(15px,2.3vh,20px)!important;padding:clamp(8px,1.3vh,13px) clamp(22px,2.6vw,40px)!important}
+#start .sfs select,#pb .pbo select{font-size:clamp(14px,1.9vh,17px)!important;padding:clamp(6px,1vh,10px) 12px!important}
+#start .sfs{width:min(760px,100%)}
+#start .sf label{font-size:clamp(12px,1.6vh,15px)}
+#start .ssteam img{width:clamp(130px,31vh,340px)!important;height:clamp(130px,31vh,340px)!important}
+#start .ssteam .nick{font-size:clamp(40px,9vh,100px)}
+#start #contInfo{font-size:clamp(14px,1.9vh,18px)}
+#pb .bk-title{display:none}
+/* Quick game: teams centred in the free space, hint lowered, complete selection box */
+#qg .qgc{display:grid;grid-template-rows:1fr auto auto auto;align-content:stretch;justify-items:center}
+#qg .qgc>.qgt{align-self:center}
+#qg #qgHint{margin-top:clamp(16px,4vh,44px)}
+.qs,.qs.sel{clip-path:none!important}
+.qs{border:2px solid transparent;border-radius:0}.qs.sel{border:2px solid var(--gold)}
+/* glowing page titles */
+#pageTitle{text-shadow:0 0 10px rgba(255,210,31,.85),0 0 26px rgba(255,210,31,.55),0 0 48px rgba(255,210,31,.3)}
+#pb .pbo select{min-width:clamp(200px,18vw,280px)!important}#pb .pbo label{font-size:clamp(12px,1.6vh,15px)!important}
+#start .sfs{display:flex!important;justify-content:center;gap:clamp(20px,4vw,60px);width:100%!important}
+#start .sf{width:clamp(200px,18vw,280px)}#start .sf select{width:100%!important;min-width:0!important}
+#start .sf #diffDesc{max-width:100%}
+#selMe,.qs .pick select{text-align:center;text-align-last:center}#selMe option,.qs .pick select option{text-align:center}
+/* light edge around team logos on the team-select screens so dark logos stay readable */
+.qs img,#start .ssteam img{filter:drop-shadow(0 0 1.5px #fff) drop-shadow(0 0 1.5px #fff) drop-shadow(0 0 5px rgba(255,255,255,.65)) drop-shadow(0 6px 14px rgba(0,0,0,.5))!important}
 </style>
 </head>
 <body>
-<div id="start" role="dialog" aria-label="Season"><div class="card"><h1>Head Coach</h1><div class="dim">Coach a real roster through a full season, or a shorter one for testing.</div><label>Your team</label><select id="selMe"></select><label>Difficulty</label><select id="selDiff"></select><p id="diffDesc" class="dim" style="margin:4px 0 0;font-size:12px;min-height:2.4em"></p><label>Number of games</label><select id="selLen"></select><p id="contInfo" class="dim"></p><div class="bar"><button id="goNew" type="button" style="background:var(--gold);color:#16221e;border-color:var(--gold)">New season</button><button id="goCont" type="button">Continue season</button><button type="button" id="goHome">Back</button><div id="warn" role="status" aria-live="polite"></div></div></div></div>
+<div id="start" role="dialog" aria-label="Season"><div class="card"><h1>Season</h1><div class="dim">Coach a real roster through a full season, or a shorter one for testing.</div><div class="qs ssteam" id="ssTeam"><div class="tag">YOUR TEAM</div><img id="ssImg" alt=""><div class="city" id="ssCity"></div><div class="nick" id="ssNick"></div><div class="pick"><button type="button" data-ssd="-1" aria-label="Previous team">&lt;</button><select id="selMe" aria-label="Your team"></select><button type="button" data-ssd="1" aria-label="Next team">&gt;</button></div></div><div class="sfs"><div class="sf"><label>Difficulty</label><select id="selDiff"></select><p id="diffDesc" class="dim" style="margin:6px 0 0;font-size:14px;min-height:2.4em"></p></div><div class="sf"><label>Number of games</label><select id="selLen"></select></div></div><p id="contInfo" class="dim"></p><div class="bar"><button id="goNew" type="button" style="background:var(--gold);color:#16221e;border-color:var(--gold)">New season</button><button id="goCont" type="button">Continue season</button><div id="warn" role="status" aria-live="polite"></div></div></div></div>
 <div id="fbm" class="modal hide" role="dialog" aria-modal="true" aria-label="Full box score"><div class="mc fbc"><div class="fbh"><button id="fbPrev" type="button" aria-label="Previous team">&lt;</button><h2 id="fbTitle">Box score</h2><button id="fbNext" type="button" aria-label="Next team">&gt;</button><button id="fbClose" type="button" aria-label="Close box score">&#10005; Close</button></div><div id="tab"></div></div></div>
 <div id="slDef" class="modal hide" role="dialog" aria-modal="true" aria-label="Default shot locations"><div class="mc"><div class="mh"><h2>Default shot locations</h2><span class="dim">Saved automatically. Applied at the start of every new game. Pick each player's 1st, 2nd and 3rd scoring spot.</span></div>
  <div class="slbar"><select id="slTeam" aria-label="Team"></select><button type="button" id="slReset">Reset team to rating-based defaults</button><span id="slSaved" class="dim" aria-live="polite"></span><button type="button" id="slClose" style="margin-left:auto">Close</button></div><div id="slDefBody"></div></div></div>
@@ -720,15 +817,17 @@ body.setonly #gnav .brand:after{content:" \00b7  Settings";font-size:13px;color:
 <aside class="hinfo card" aria-live="polite"><h2 id="hiT"></h2><ul id="hiL"></ul><p id="hiD"></p></aside></div>
 <div class="hfoot"><div class="keys"><span><b>&#8592;&#8593;&#8595;&#8594;</b>Move</span><span><b>Enter</b>Select</span><span><b>Esc</b>Back</span></div><button type="button" id="hGo" class="hadv">Advance</button></div></div></div>
 <div id="pb" class="hide" role="dialog" aria-label="Playoffs"><div class="pbc card"><h2 style="text-align:center">Playoffs</h2><div class="dim" style="text-align:center">Set the seeds (1-10 in each conference; 7-10 start in the Play-In), choose the team you coach, then continue.</div>
-<div class="pbg"><div id="pbW"></div><div id="pbE"></div></div>
+<div class="bk-wrap" id="pbBk"></div>
 <div class="pbo"><label for="pbMe">Your team</label><select id="pbMe"></select><label for="pbDiff">Difficulty</label><select id="pbDiff"></select></div>
 <p id="pbInfo" class="dim" style="text-align:center;margin:6px 0"></p>
-<div class="bar" style="justify-content:center"><button type="button" id="pbGo" style="background:var(--gold);color:#16221e;border-color:var(--gold)">Continue</button><button type="button" id="pbCont">Resume playoffs</button><button type="button" id="pbReset">Reset bracket</button><button type="button" id="pbBack">Back</button><span id="pbWarn" class="dim" role="status"></span></div></div></div>
+<div class="bar" style="justify-content:center"><button type="button" id="pbGo" style="background:var(--gold);color:#16221e;border-color:var(--gold)">Continue</button><button type="button" id="pbCont">Resume playoffs</button><button type="button" id="pbReset">Reset bracket</button><span id="pbWarn" class="dim" role="status"></span></div></div></div>
 <div id="qg" class="hide" role="dialog" aria-label="Quick game"><div class="qgc card"><h2 style="text-align:center">Quick game</h2>
 <div class="qgt"><div class="qs" id="qsAway" data-qside="away"></div><div class="qvs">@</div><div class="qs" id="qsHome" data-qside="home"></div></div>
 <div id="qgHint" class="dim" style="text-align:center"></div>
 <div id="qgWarn" class="dim" style="text-align:center;min-height:1.3em"></div>
-<div class="bar" style="justify-content:center"><button type="button" id="qgStart" style="background:var(--gold);color:#16221e;border-color:var(--gold)">Start game</button><button type="button" id="qgBack">Back</button></div></div></div>
+<div class="bar" style="justify-content:center"><button type="button" id="qgStart" style="background:var(--gold);color:#16221e;border-color:var(--gold)">Start game</button></div></div></div>
+<button type="button" id="homeBack" aria-label="Back to home" title="Back to home"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12H5M11 5l-7 7 7 7"/></svg></button>
+<div id="pageTitle" aria-hidden="true"></div>
 <header id="gnav"><span class="brand">Head Coach</span><nav class="gtabs" role="tablist" aria-label="Primary navigation"></nav><span id="gcur"></span><button id="gburger" type="button" aria-label="Open navigation menu" aria-expanded="false" aria-controls="gdrawer">&#9776;</button></header>
 <div class="gscrim hide" id="gscrim"></div><aside class="gdrawer" id="gdrawer" aria-hidden="true" aria-label="Primary navigation menu"><button class="gx" id="gclose" type="button" aria-label="Close navigation menu">&#10005; Close</button></aside>
 <div class="app">
@@ -1364,7 +1463,7 @@ function recordResult(u0,t0){if(SZ.quick)return;   /* quick game: no standings, 
  SZ.gi++;if(SZ.gi>=SZ.sched.length)awardMVP();saveSZ()}
 function nextGame(){if(SZ&&SZ.quick)return;   /* quick games end on the Final message; its button opens the setup screen */if(SZ.gi<SZ.sched.length){init();return}$('#start').classList.add('hide');ensurePost();
  if(SZ.watch){nav('games');watchLoop();return}
- if(!(SZ.po&&SZ.po.champ))advanceToUserGame();syncUserGame();if(SZ.pg){init();nav('play');return}
+ syncUserGame();if(SZ.pg){init();nav('play');return}   /* no auto-sim: Play-In / playoff days pass only via Simulate day or your own game */
  const L=SZ.league[SZ.me];gv='playoffs';nav('games');if(SZ.playoffs){msg(`<b>Playoffs</b><br>Manage the bracket from the Games tab.${userStatus().k==='alive'?'':'<br><br><button onclick="startNewSeason()">New playoffs</button>'}`);return}msg(`<b>Regular season complete: ${L.w}-${L.l}</b><br>The postseason is in the Games tab.${userStatus().k==='alive'?'':'<br><br><button onclick="showStart()">New season</button>'}`)}
 
 /* ---------- Simulated seasons and playoffs ---------- */
@@ -1435,7 +1534,7 @@ function postCtl(view){if(!SZ)return'';const reg=SZ.gi<SZ.sched.length;if(!reg)e
  let b='';if(mine)b+=`<button onclick="playMyPost()">Play my game (${mine.v===SZ.me?'at '+mine.h:'vs '+mine.v})</button>`;
  if(!reg&&!done&&!alive&&!w)b+=`<button onclick="watchStart()">Watch Play-In/Playoffs</button>`;
  if(w&&!done)b+=`<button onclick="watchToggle()">${run?'Pause watching':'Resume watching'}</button><button onclick="xset('gd',null)">Jump to latest day</button>`;
- if(view==='bracket')b+=`<button onclick="simRound()"${dRound}>Simulate round</button><button onclick="simPost()"${dRound}>Simulate postseason</button>`;
+ if(view==='bracket')b+=`<button onclick="simDay()"${dDay}>Simulate day</button><button onclick="simRound()"${dRound}>Simulate round</button><button onclick="simPost()"${dRound}>Simulate postseason</button>`;
  else b+=`<button onclick="simDay()"${dDay}>Simulate day</button><button onclick="simSeason()"${dSeason}>Simulate season</button>`;
  if(!reg&&(done||!alive))b+=`<button onclick="startNewSeason()">${PM()?'New Playoffs':'Start New Season'}</button>`;
  const note=view==='bracket'?(reg?'<div class="dim">Simulate round and Simulate postseason unlock after all regular-season games are played.</div>':''):(!reg&&!done?'<div class="dim">Simulate season is only available during the regular season.</div>':'');
@@ -1472,7 +1571,7 @@ function syncUserGame(){if(!SZ||SZ.gi<SZ.sched.length)return false;ensurePost();
  if(!g){if(SZ.pg){SZ.pg=null;saveSZ()}return false}
  const want={opp:g.h===SZ.me?g.v:g.h,home:g.h===SZ.me};if(!SZ.pg||SZ.pg.opp!==want.opp||SZ.pg.home!==want.home){SZ.pg=want;saveSZ();return true}return false}
 function advanceToUserGame(){let n=0;while(n++<400&&SZ.gi>=SZ.sched.length&&!(SZ.po&&SZ.po.champ)&&userStatus().k==='alive'&&!curDay().some(g=>g.u))postDay(null)}
-function prepPost(){if(!SZ||SZ.gi<SZ.sched.length)return false;ensurePost();if(!SZ.watch&&!(SZ.po&&SZ.po.champ))advanceToUserGame();syncUserGame();const g=SZ.pg;
+function prepPost(){if(!SZ||SZ.gi<SZ.sched.length)return false;ensurePost();syncUserGame();const g=SZ.pg;
  if(g&&(over||!T||T[0].code!==SZ.me||T[1].code!==g.opp)){init();return true}return false}
 function postCtx(){const g=SZ.pg;if(!g)return'';const me=SZ.me,h=g.home?me:g.opp,v=g.home?g.opp:me;
  if(SZ.po){const x=serFor(h,v);if(x){const n=x.wa+x.wb;return STAGE_NAMES[SZ.po.stage]+' \u00B7 Game '+(n+1)+' \u00B7 '+(n?serTxt(x.a.c,x.b.c,x.wa,x.wb,false):'Series begins')}return STAGE_NAMES[SZ.po.stage]}
@@ -1679,7 +1778,8 @@ function init(){
  ball={st:'tip',x:47,y:25,ht:0,hs:0,tt:0,dur:1.15,z:0};G={ph:'dead',hold:true,off:0,timer:1.15,why:'opening tip',tipPending:true,tipStarted:false,tipWinner:R()<.5?0:1,lastCpuScoreClock:QLEN};AI();
  poss(G.tipWinner,'tip');A.forEach((team,ti)=>team.forEach((a,i)=>{a.vx=a.vy=0;a.mode='';a.cut=null;const side=-dirOf(ti),o=ord(ti),k=o.indexOf(i),spot=[[17,25],[10,14],[10,36],[10,25],null][k];if(k===4){a.x=side<0?45.8:48.2;a.y=25}else{a.x=47+side*spot[0];a.y=spot[1]}}));ball.st='tip';ball.x=47;ball.y=25;ball.tt=0;inputs();buildRot();buildOppRot();
  msg(SZ.gi>=SZ.sched.length?(SZ.pg?'<b class="msg1">'+postTitle()+'</b><br><span class="msg1">'+(g.home?'vs':'at')+' '+T[1].name+'.</span><br><br><button onclick="startTip()">Start</button>':'Postseason: no game for your team right now. Manage it from the Games tab.'):`<span class="msg1">${SZ.quick?(g.home?T[1].name+' vs '+T[0].name:T[0].name+' vs '+T[1].name):'Game '+(SZ.gi+1)+' of '+SZ.sched.length+': '+(g.home?'vs':'at')+' '+T[1].name}</span><br><br><button onclick="startTip()">Start</button>`);$('#start').classList.add('hide');ui()}
-function showStart(){const c=$('#goCont'),s=loadSZ();c.style.display=s?'':'none';$('#contInfo').textContent=s?`Season in progress: ${TEAM_NAMES.find(t=>t[0]===s.me)[1]}, ${s.gi>=s.sched.length?'postseason':'game '+(s.gi+1)+' of '+s.sched.length}, ${s.league[s.me].w}-${s.league[s.me].l}`:'';$('#start').classList.remove('hide')}
+function ssSync(){const sel=$('#selMe');if(!sel||!sel.value)return;const c=sel.value,n=quickNameParts(c),col=quickColor(c),im=$('#ssImg');im.style.visibility='';im.onerror=()=>{im.style.visibility='hidden'};im.src=`https://cdn.nba.com/logos/nba/${TEAM_IDS[c]}/global/L/logo.svg`;$('#ssCity').textContent=n.city;const k=$('#ssNick');k.textContent=n.nick;k.style.color=col;k.style.textShadow=`0 0 22px ${col}66`}
+function showStart(){ssSync();const c=$('#goCont'),s=loadSZ();c.style.display=s?'':'none';$('#contInfo').textContent=s?`Season in progress: ${TEAM_NAMES.find(t=>t[0]===s.me)[1]}, ${s.gi>=s.sched.length?'postseason':'game '+(s.gi+1)+' of '+s.sched.length}, ${s.league[s.me].w}-${s.league[s.me].l}`:'';$('#start').classList.remove('hide')}
 function inputs(){const t=T[0];$('#tempo').value=t.tempo;$('#style').value=t.style;$('#def').value=t.def;$('#cov').value=t.cov;$('#gam').value=t.gam;$('#auto').checked=t.auto;$('#shotprofile').value=t.shotprofile||'balanced';$('#gameplan').value=t.gameplan||'balanced';$('#rebstrat').value=t.rebstrat||'auto';$('#emph').value=t.emph||'star';{const dv=$('#drvOn');if(dv)dv.checked=t.drive!==false}const hb=$('#hackBtn');if(hb){hb.textContent='Intentional foul: '+(t.hack?'ON':'Off');hb.classList.toggle('on',!!t.hack);hb.setAttribute('aria-pressed',!!t.hack)}}
 
 /* Select a primary ball-handler for every inbound: prefer the starting point guard, but allow an elite ball-handler to take it when his handle/decision profile is clearly superior. */
@@ -2924,12 +3024,21 @@ function syncSides(){const h=homeT();T.forEach((t,i)=>{const el=$('#s'+i);el.cla
 function sbExtra(){try{const ser=$('#ser');if(!ser||!T)return;if(SZ&&SZ.quick){ser.textContent='NBA 2027';return}const h=homeT(),aw=1-h;let x=null;if(SZ&&SZ.po&&SZ.gi>=SZ.sched.length)x=serFor(T[0].code,T[1].code);
  if(x){const w=i=>T[i].code===x.a.c?x.wa:x.wb;ser.textContent=w(aw)+' - '+w(h)}
  else{const rec=i=>{const L=SZ&&!SZ.playoffs&&SZ.league&&SZ.league[T[i].code];return L?L.w+'-'+L.l:''},a=rec(aw),b=rec(h),g='\u00A0\u00A0\u00A0';ser.textContent=a&&b?a+g+'|'+g+b:''}}catch(e){}}
-function hud(){sbExtra();T.forEach((t,i)=>{$(`#s${i} .sc`).textContent=t.sc;const foulEl=$(`#bn${i}`);if(foulEl){const n=Math.max(0,T[1-i].pf||0);foulEl.innerHTML=inBonus(i)?'<span class="foul-bonus">BONUS</span>':[1,2,3,4,5].map(k=>`<i class="${k<=n?'on':''}"></i>`).join('');foulEl.title=`${n} foul${n===1?'':'s'} against ${t.n} this quarter`}});$('#qtr').textContent=q>4?'OT'+(q>5?q-4:''):['1st','2nd','3rd','4th'][q-1];$('#clk').textContent=fmt(Math.max(0,clock));$('#sc24').textContent=Math.max(0,Math.ceil(G.c24));const st=$('#sts');st.textContent=over?'Final':G.tipPending||G.ph==='tip'?'Tipoff':G.ph==='dead'?(G.why?(/violation/i.test(G.why)?G.why.replace(/\b\w/g,c=>c.toUpperCase()):G.why.charAt(0).toUpperCase()+G.why.slice(1)):'Dead ball'):'Live'}
+function brandSync(){const b=document.querySelector('#gnav .brand');if(!b)return;const bd=document.body.classList,home=!$('#home').classList.contains('hide'),t=(home||bd.contains('rosterview')||bd.contains('setonly'))?'Head Coach':QK.on?'Quick Game':SZ&&SZ.playoffs?'Playoffs':'Season';if(b.textContent!==t)b.textContent=t}
+function hud(){brandSync();sbExtra();T.forEach((t,i)=>{$(`#s${i} .sc`).textContent=t.sc;const foulEl=$(`#bn${i}`);if(foulEl){const n=Math.max(0,T[1-i].pf||0);foulEl.innerHTML=inBonus(i)?'<span class="foul-bonus">BONUS</span>':[1,2,3,4,5].map(k=>`<i class="${k<=n?'on':''}"></i>`).join('');foulEl.title=`${n} foul${n===1?'':'s'} against ${t.n} this quarter`}});$('#qtr').textContent=q>4?'OT'+(q>5?q-4:''):['1st','2nd','3rd','4th'][q-1];$('#clk').textContent=fmt(Math.max(0,clock));$('#sc24').textContent=Math.max(0,Math.ceil(G.c24));const st=$('#sts');st.textContent=over?'Final':G.tipPending||G.ph==='tip'?'Tipoff':G.ph==='dead'?(G.why?(/violation/i.test(G.why)?G.why.replace(/\b\w/g,c=>c.toUpperCase()):G.why.charAt(0).toUpperCase()+G.why.slice(1)):'Dead ball'):'Live'}
 const ROW=36,SEP=26;let rowEls={};
 function buildRot(){const el=$('#rot');el.innerHTML='';rowEls={};T[0].pl.forEach((p,i)=>{const e=document.createElement('div');e.className='r';e.dataset.i=i;e.innerHTML='<span class="pp"></span><span class="nn"></span><span class="eb"><i></i><b>100%</b></span><span class="pf"></span><span class="pt"></span><span class="tg"></span>';el.appendChild(e);rowEls[i]=e});
  const s=document.createElement('div');s.className='sepl dim';s.textContent='Bench';s.id='sepl';el.appendChild(s);el.style.height=(T[0].pl.length*ROW+SEP)+'px'}
 /* Positions: a player's court position is his .pos label. Matchups pair offense and defense by position (PG-PG ... C-C), so a manual position change reassigns who guards whom. */
-function posMatch(off){const so=[0,1,2,3,4].sort((a,b)=>POSO[pl(off,a).pos]-POSO[pl(off,b).pos]||a-b),sd=[0,1,2,3,4].sort((a,b)=>POSO[pl(1-off,a).pos]-POSO[pl(1-off,b).pos]||a-b),dm=[0,0,0,0,0];sd.forEach((d,k)=>dm[d]=so[k]);return dm}
+function posMatch(off){const def=1-off,so=[0,1,2,3,4].sort((a,b)=>POSO[pl(off,a).pos]-POSO[pl(off,b).pos]||a-b),sd=[0,1,2,3,4].sort((a,b)=>POSO[pl(def,a).pos]-POSO[pl(def,b).pos]||a-b),dm=[0,0,0,0,0];
+ if(!cpuT(def)){sd.forEach((d,k)=>dm[d]=so[k]);return dm}   // the user's own defense keeps the plain position-for-position matchups
+ /* Smart CPU matchups: guards, wings (SF) and front court (PF/C) are matched within their own group. The most dangerous offensive player in a group draws the best defender of that group (best interior defender on the best big, best perimeter defender on the best guard/wing), so the top post defender guards the top post-up threat. Players left over by uneven groups fall back to the nearest position. */
+ const grp=q=>q==='PG'||q==='SG'?'g':q==='SF'?'w':'f',at=(q,k)=>(q.attr&&Number.isFinite(q.attr[k])?q.attr[k]:q.ovr),
+  sc=(s_,g)=>{const q=pl(def,s_);return (g==='f'?at(q,'interior'):at(q,'perimeter'))*.7+q.ovr*.3};
+ const O=[0,1,2,3,4].map(s_=>({s:s_,g:grp(pl(off,s_).pos),v:pl(off,s_).ovr})).sort((x,y)=>y.v-x.v||x.s-y.s),free=new Set([0,1,2,3,4]);
+ for(const o of O){const c=[...free].filter(d=>grp(pl(def,d).pos)===o.g).sort((x,y)=>sc(y,o.g)-sc(x,o.g)||x-y)[0];if(c!==undefined){dm[c]=o.s;free.delete(c);o.done=true}}
+ for(const o of O.filter(o=>!o.done)){const op=POSO[pl(off,o.s).pos],c=[...free].sort((x,y)=>Math.abs(POSO[pl(def,x).pos]-op)-Math.abs(POSO[pl(def,y).pos]-op)||sc(y,o.g)-sc(x,o.g)||x-y)[0];dm[c]=o.s;free.delete(c)}
+ return dm}
 const POS5=['PG','SG','SF','PF','C'];
 function setPos(ti,i,pos){const p=T[ti].pl[i];if(!p||!POS5.includes(pos)||p.pos===pos)return;p.pos0=p.pos0||p.pos;p.pos=pos;afterPosChange()}
 function swapPos(ti,i,j){const t=T[ti],a=t.pl[i],b=t.pl[j];if(!a||!b||i===j)return'Pick two different players.';a.pos0=a.pos0||a.pos;b.pos0=b.pos0||b.pos;if(a.pos===b.pos){const cov=new Set(t.on.slice(0,5).filter(k=>k!==i&&k!==j).map(k=>t.pl[k].pos)),ix=POS5.indexOf(b.pos),c=POS5.filter(p=>p!==b.pos).sort((x,y)=>(cov.has(x)-cov.has(y))||Math.abs(POS5.indexOf(x)-ix)-Math.abs(POS5.indexOf(y)-ix)||POS5.indexOf(x)-POS5.indexOf(y))[0];b.pos=c;afterPosChange();return`${b.n} → ${b.pos}`}[a.pos,b.pos]=[b.pos,a.pos];afterPosChange();return`${a.n} → ${a.pos}, ${b.n} → ${b.pos}`}
@@ -3014,6 +3123,8 @@ $('#selLen').value='58';
 Array.from($('#selDiff').options||[]).forEach(o=>o.title=(DIFF[o.value]||{}).desc||'');
 const showDiff=()=>{$('#diffDesc').textContent=(DIFF[$('#selDiff').value]||{}).desc||''};
 $('#selDiff').onchange=showDiff;showDiff();
+$('#selMe').addEventListener('change',ssSync);$('#ssTeam').addEventListener('click',e=>{const b=e.target.closest('[data-ssd]');if(!b)return;const sel=$('#selMe'),n=sel.options.length;sel.selectedIndex=(sel.selectedIndex+(+b.dataset.ssd)+n)%n;ssSync()});
+addEventListener('keydown',e=>{if($('#start').classList.contains('hide')||!/^Arrow(Left|Right)$/.test(e.key)||/^(SELECT|INPUT|TEXTAREA)$/.test((e.target||{}).tagName))return;const sel=$('#selMe'),n=sel.options.length;sel.selectedIndex=(sel.selectedIndex+(e.key==='ArrowRight'?1:-1)+n)%n;ssSync();e.preventDefault()});
 $('#goNew').onclick=()=>{const w=$('#warn');w.textContent='';try{const team=$('#selMe').value,diff=$('#selDiff').value,len=+$('#selLen').value;if(!team||!diff)throw new Error('Choose a team and difficulty first.');if(![5,29,58,82].includes(len))throw new Error('Choose the number of games.');newSeason(team,diff,len);if(!SZ||!SZ.sched||!SZ.sched.length)throw new Error('Season schedule was not created.');init()}catch(e){w.textContent='Could not start season: '+(e&&e.message?e.message:String(e));console.error('New season failed',e)}};
 $('#goCont').onclick=()=>{const w=$('#warn');w.textContent='';try{SZ=loadSZ();if(SZ)nextGame();else w.textContent='No saved season found. Choose New season.'}catch(e){w.textContent='Could not continue: '+(e&&e.message?e.message:String(e));console.error('Continue season failed',e)}};
 // Keep the season modal and its controls clickable even if another overlay is present.
@@ -3091,8 +3202,10 @@ const HOME_INFO={
  settings:{t:'Settings',l:()=>['Game length','Sound and defaults','Shot locations'],d:'Opens your season settings, or quick-game settings if you have no season.'}};
 const HOME_ORDER=['quick','season','playoffs','roster','settings'];let hFocus='quick';
 function homeFocus(k){hFocus=k;document.querySelectorAll('.htile').forEach(b=>b.classList.toggle('foc',b.dataset.h===k));const it=HOME_INFO[k];$('#hiT').textContent=it.t;$('#hiL').innerHTML=it.l().map(x=>`<li>${x}</li>`).join('');$('#hiD').textContent=it.d}
+const PAGE_TITLES={quick:'Quick Game',season:'Season',playoffs:'Playoffs',roster:'Roster',settings:'Settings'};
 function homeReset(){document.body.classList.remove('rosterview','setonly');QK.rv=false;activeScreen='play';applyScreen()}
 function homeGo(k){
+ $('#pageTitle').textContent=PAGE_TITLES[k]||'';
  if(k==='quick'){homeReset();openQuickSetup()}
  else if(k==='season'){homeReset();leaveQuick();$('#home').classList.add('hide');showStart()}   /* existing dialog: Continue / New season */
  else if(k==='playoffs'){homeReset();leaveQuick();openPlayoffSetup()}
@@ -3102,9 +3215,16 @@ function homeGo(k){
 const PB={sd:null};
 /* Default playoff field = final 2025-26 regular-season standings, seeds 1-10 per conference (7-10 are the Play-In teams). */
 function pbDefault(){return{West:['OKC','SAS','DEN','LAL','HOU','MIN','PHX','POR','LAC','GSW'],East:['DET','BOS','NYK','CLE','TOR','ATL','PHI','ORL','CHA','MIA']}}
+function pbBracket(){const logo=c=>`https://cdn.nba.com/logos/nba/${TEAM_IDS[c]}/global/L/logo.svg`,
+ T=(cf,i)=>{const c=PB.sd[cf][i],all=TEAM_NAMES.filter(t=>t[2]===cf).sort((a,b)=>quickNameParts(a[0]).nick.localeCompare(quickNameParts(b[0]).nick));return`<div class="bk-t pbt${c===($('#pbMe')||{}).value?' me':''}" style="--tc:${(TEAM_COLORS[c]||['#778'])[0]}"><img class="bk-lg" alt="" src="${logo(c)}" onerror="this.style.display='none'"><select data-pbs="${cf}|${i}" aria-label="${cf}ern conference seed ${i+1}" title="${tnm(c)}">${all.map(t=>`<option value="${t[0]}"${t[0]===c?' selected':''}>${quickNameParts(t[0]).nick}</option>`).join('')}</select><span class="bk-s">${ordn(i+1)}</span></div>`},
+ ph=t=>`<div class="bk-t ph"><b>${t}</b></div>`,ser=(a,b)=>`<div class="bk-ser">${a}${b}</div>`,tbd=n=>`<div class="bk-col">${ser(ph('TBD'),ph('TBD')).repeat(n)}</div>`,
+ card=(t,a,b,n)=>`<div class="bk-pig"><div class="bk-pgl">${t}</div>${a}${b}<div class="bk-pgn">${n}</div></div>`,
+ r1=cf=>`<div class="bk-col">${ser(T(cf,0),ph('8TH SEED'))}${ser(T(cf,3),T(cf,4))}${ser(T(cf,2),T(cf,5))}${ser(T(cf,1),ph('7TH SEED'))}</div>`,
+ pi=cf=>`<div class="bk-col bk-pi">${card('9 vs 10',T(cf,8),T(cf,9),'Loser is eliminated')}${card('For the 8th seed',ph('LOSER 7/8'),ph('WINNER 9/10'),'Winner takes the 8th seed')}${card('7 vs 8',T(cf,6),T(cf,7),'Winner takes the 7th seed \u00B7 loser plays on')}</div>`,
+ rl=['Play-In','First round','Semifinals','Conf. finals','NBA Finals','Conf. finals','Semifinals','First round','Play-In'];
+ return`<div class="bk pbk"><div class="bk-conf">Western Conference</div><div class="bk-title">PLAYOFFS</div><div class="bk-conf bk-e">Eastern Conference</div>${rl.map(x=>`<div class="bk-rl">${x}</div>`).join('')}${pi('West')}${r1('West')}${tbd(2)}${tbd(1)}<div class="bk-col bk-fin">${ser(ph('TBD'),ph('TBD'))}</div>${tbd(1)}${tbd(2)}${r1('East')}${pi('East')}</div>`}
 function renderPB(){PB.sd=PB.sd||pbDefault();
- ['West','East'].forEach(cf=>{const all=TEAM_NAMES.filter(t=>t[2]===cf).sort((a,b)=>a[1].localeCompare(b[1]));
-  $('#pb'+cf[0]).innerHTML=`<h3>${cf}ern Conference</h3>`+PB.sd[cf].map((c,i)=>`<div class="pbr"><b>${i+1}</b><select data-pbs="${cf}|${i}" aria-label="${cf} seed ${i+1}">${all.map(t=>`<option value="${t[0]}"${t[0]===c?' selected':''}>${t[1]}</option>`).join('')}</select></div>`).join('')});
+ $('#pbBk').innerHTML=pbBracket();
  const me=$('#pbMe'),keep=me.value,codes=[...PB.sd.West,...PB.sd.East];me.innerHTML=codes.map(c=>`<option value="${c}">${tnm(c)}</option>`).join('');me.value=codes.includes(keep)?keep:codes[0];
  const d=$('#pbDiff');if(!d.options.length){d.innerHTML=Object.keys(DIFF).map(k=>`<option>${k}</option>`).join('');d.value=SEL.diff||'Pro'}
  const p=loadPZ();$('#pbCont').style.display=p?'':'none';$('#pbInfo').textContent=p?`Playoffs in progress: ${tnm(p.me)}, ${p.po?(p.po.champ?'finished':STAGE_NAMES[p.po.stage].toLowerCase()):'play-in'}. Continue starts a new bracket and replaces it.`:''}
@@ -3117,17 +3237,16 @@ $('#pb').addEventListener('change',e=>{const el=e.target.closest('[data-pbs]');i
 $('#pbGo').onclick=()=>{try{startPlayoffsMode()}catch(e){$('#pbWarn').textContent='Could not start: '+(e&&e.message||e);console.error(e)}};
 $('#pbCont').onclick=()=>{const s=loadPZ();if(!s)return;SZ=s;QK.on=false;leaveQuick();$('#pb').classList.add('hide');nextGame()};
 $('#pbReset').onclick=()=>{PB.sd=pbDefault();renderPB()};
-$('#pbBack').onclick=()=>showHome();
 function showHome(){document.body.classList.remove('rosterview','setonly');QK.rv=false;activeScreen='play';try{applyScreen()}catch(e){}$('#pb').classList.add('hide');$('#qg').classList.add('hide');$('#start').classList.add('hide');homeFocus(hFocus);$('#home').classList.remove('hide')}
 document.querySelectorAll('.htile').forEach(b=>{b.onmouseenter=b.onfocus=()=>homeFocus(b.dataset.h);b.onclick=()=>homeGo(b.dataset.h)});
 $('#hGo').onclick=()=>homeGo(hFocus);
-$('#goHome').onclick=showHome;   // Season dialog: back to the main menu
-addEventListener('keydown',e=>{if(e.key==='Escape'&&(!$('#qg').classList.contains('hide')||!$('#pb').classList.contains('hide')))showHome()});
+addEventListener('keydown',e=>{if(e.key!=='Escape'||e.defaultPrevented)return;if(document.querySelector('.modal:not(.hide),.gmodal.open'))return;if(!$('#home').classList.contains('hide'))return;const b=$('#homeBack');if(b&&getComputedStyle(b).display!=='none'){e.preventDefault();b.click()}});
 addEventListener('keydown',e=>{if($('#home').classList.contains('hide')||!/^Arrow/.test(e.key))return;const i=HOME_ORDER.indexOf(hFocus),d={ArrowRight:1,ArrowLeft:-1,ArrowDown:2,ArrowUp:-2}[e.key],n=(i+d+HOME_ORDER.length)%HOME_ORDER.length;homeFocus(HOME_ORDER[n]);document.querySelector(`.htile[data-h="${HOME_ORDER[n]}"]`).focus();e.preventDefault()});
 
-$('#qgBack').onclick=showHome;$('#qgStart').onclick=startQuick;
+$('#qgStart').onclick=startQuick;
 $('#qg').addEventListener('click',e=>{const sp=e.target.closest('[data-qside]'),p=e.target.closest('[data-qp]');if(sp&&!e.target.closest('select,button')){QK.coach=QK.coach===sp.dataset.qside?'none':sp.dataset.qside;renderQuick()}if(p){const codes=quickTeams().map(t=>t[0]),i=codes.indexOf(QK[p.dataset.qp]);QK[p.dataset.qp]=codes[(i+(+p.dataset.d)+codes.length)%codes.length];renderQuick()}});
 $('#qg').addEventListener('change',e=>{const sel=e.target.closest('[data-qsel]');if(sel){QK[sel.dataset.qsel]=sel.value;renderQuick()}});
+$('#homeBack').onclick=()=>{if(document.body.classList.contains('rosterview')||document.body.classList.contains('setonly'))document.querySelector('#gnav .brand').click();else showHome()};
 {const b=document.querySelector('#gnav .brand');b.setAttribute('role','button');b.tabIndex=0;b.title='Back to home';const go=()=>{if(typeof T!=='undefined'&&T&&!over&&(q>1||clock<QLEN)&&!confirm('Leave this game and go home? Unfinished game progress is lost.'))return;paused=true;showHome()};b.onclick=go;b.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go()}}}
 
 {const s=loadSZ();if(s){SZ=s;ensurePost()}else{newSeason('MIA','Hall of Fame')}init();showHome()}
