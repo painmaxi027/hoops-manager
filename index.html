@@ -2180,7 +2180,7 @@ function offT(a){
  if(G.fb&&u>30&&!hold&&T[t].style==='four'&&G.as&&G.as[s]===4){const sp_=offSpot(a);return{x:sp_.x,y:sp_.y,sp:1.38}}
  if(G.fb&&u>30){const lanes=[{u:25,v:21},{u:19,v:10},{u:15,v:0},{u:19,v:-10},{u:25,v:-21}],lane=lanes[s],target=U(lane.u,lane.v);if(!hold){return{...target,sp:1.04}}}
  if(hold){if(a.cstep&&a.cstep.t>0&&G.ph==='live'&&a.mode!=='drive'){a.cstep.t-=1/30;return{x:a.cstep.x,y:a.cstep.y,sp:.75}}if(a.mode==='advance'){if(u>47)return{...U(30,(a.y-25)*.18),sp:1.42};if(u>35)return{...U(23,(a.y-25)*.12),sp:1.30};const spot=(T[t].style==='four'&&G.as&&G.as[s]!==4)?perimTarget(a):null;const target=spot||U(S.sp[0][0],S.sp[0][1]+(a.wy||0));if(hyp(target.x-a.x,target.y-a.y)>2.2)return{x:target.x,y:target.y,sp:1.08,cornerTendency:target.cornerTendency};a.mode='';a.mt=0;}if(a.mode==='post')return{x:H.x-dir*(a.px||6.5),y:25+(a.py||7),sp:.6};if(a.mode==='drive')return{x:H.x,y:25+(a.dy||0),sp:1.24};if(a.mode==='iso')return{...U(20,(a.wy||0)*.8-6),sp:.5};
-  if(u>47)return{...U(G.fb?10:32,(a.y-25)*.5),sp:G.fb?1.08:1.12};if(pg)return{...U(pg[0],pg[1]),sp:.6};if(T[t].style==='four'&&!G.fb&&(Math.abs(a.y-25)>=8||(H.x-a.x)*dir<19)){const g0=routeOut(a,{x:a.x,y:a.y,sp:.5});return{x:g0.x,y:g0.y,sp:.5}}   // not at the top: stay on the perimeter (or step back out to it); never cross the lane region
+  if(u>47)return{...U(G.fb?10:32,(a.y-25)*.5),sp:G.fb?1.08:1.12};if(pg)return{...U(pg[0],pg[1]),sp:.6};if(T[t].style==='four'&&!G.fb&&(Math.abs(a.y-25)>=8||(H.x-a.x)*dir<19)){const g0=routeOut(a,{x:a.x,y:a.y,sp:.5});return{x:g0.x,y:g0.y,sp:hyp(g0.x-a.x,g0.y-a.y)>5?1.0:.5}}   /* purposeful dribble back out to the arc; only ease off when nearly there (a .5 crawl froze the whole team for seconds) */   // not at the top: stay on the perimeter (or step back out to it); never cross the lane region
   a.wy+=((a.wyT==null?a.wy:a.wyT)-a.wy)*.04;return{...U(S.sp[0][0],S.sp[0][1]+a.wy),sp:.45}}
  if(a.cut&&a.cut.t>0)return{x:a.cut.x,y:a.cut.y,sp:1};
  if(pg)return{...U(pg[0],pg[1]),sp:.85};
@@ -2524,8 +2524,8 @@ function offenseAI(dt){
  // Open floor: nobody between the handler and the rim -> keep sprinting for the easy two, from the backcourt or half court too. Runs before every pass/shot read.
  if(brk&&a.mode!=='drive'){a.mode='drive';a.mt=cl(u/10,1.2,4.2);a.dy=cl((25-a.y)*.3,-3,3);a.dec=.2;G.fbGo=false;log(`${P.n} has a clear lane — keeps going for the easy two`);return}
  /* Stall breaker: if all ten players have stood still for ~1s in a live half-court possession, cancel any dead-end post plan, restart cuts/screens, and make the handler act (open shot > safe swing pass > attack) so nobody stands around for seconds. */
- {let mv=0;for(const tm of A)for(const p of tm){const v=Math.hypot(p.vx||0,p.vy||0);if(v>mv)mv=v}
-  G.stillT=(G.ph==='live'&&mv<.45&&!G.inboundActive&&!G.inboundOutside&&!(G.relT>0)&&!G.play?.called)?(G.stillT||0)+dt:0;
+ {let mv=0,mvO=0;for(const tm of A)for(const p of tm){const v=Math.hypot(p.vx||0,p.vy||0);if(v>mv)mv=v;if(p!==a&&v>mvO)mvO=v}const slowWalk=mv>=.45&&mvO<.45&&Math.hypot(a.vx||0,a.vy||0)<8&&ball.st==='held'&&ball.ht===t&&ball.hs===a.s;   /* the other nine are frozen and only the handler is creeping */
+  G.stillT=(G.ph==='live'&&(mv<.45||slowWalk)&&!G.inboundActive&&!G.inboundOutside&&!(G.relT>0)&&!G.play?.called)?(G.stillT||0)+(mv<.45?dt:dt*.5):0;
   if(G.stillT>1.1&&a.mode!=='drive'&&a.mode!=='post'&&a.mode!=='advance'&&G.dbl<0&&G.c24>1.5){G.stillT=0;
    const me_=evShot(t,a.s,a.x,a.y),meGap=Math.min(...A[1-t].map(d=>hyp(d.x-a.x,d.y-a.y))),meType=me_.ty;
    const mates=A[t].filter(b=>b.s!==a.s&&passOK(a,b.s)&&!bcx(t,b)).map(b=>({b,e:evShot(t,b.s,b.x,b.y),risk:laneRisk(t,a.x,a.y,b.x,b.y),d:hyp(b.x-a.x,b.y-a.y),gap:Math.min(...A[1-t].map(d=>hyp(d.x-b.x,d.y-b.y))),op:openF(t,b.x,b.y)})).filter(x=>x.d>=3&&x.d<=25&&x.risk<.38&&x.gap>=4.2&&(x.op>=.42||x.e.v>=me_.v+.12)).sort((x,y)=>(y.e.v+y.op*1.4-y.risk*1.5)-(x.e.v+x.op*1.4-x.risk*1.5));
