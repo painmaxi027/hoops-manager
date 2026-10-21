@@ -339,7 +339,30 @@ th.srt{cursor:pointer;user-select:none;white-space:nowrap}th.srt:hover,th.srt:fo
 .fb-period button,.team-stats-head button,#fbPrev,#fbNext{box-sizing:border-box;height:32px;padding:0;display:inline-flex;align-items:center;justify-content:center;flex:none;line-height:1}.fb-period button,#fbPrev,#fbNext{width:40px}.team-stats-head button{width:36px}
 .fb-period button:hover,.fb-period button:active,.team-stats-head button:hover,.team-stats-head button:active,#fbPrev:hover,#fbPrev:active,#fbNext:hover,#fbNext:active{transform:none!important}
 .team-stats-head{height:34px}.team-stats-head h2{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.fbh{min-height:40px}.fbh h2{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#fbm{align-items:flex-start}#fbm .fbc{margin-top:2vh}.gmodal{align-items:flex-start}.gm-card{margin-top:2vh;max-height:calc(98vh - 26px)}
+/* ---- Popups: every modal/dialog sits in the exact center of the screen ---- */
+.modal,.gmodal,#fbm,#rmodal{align-items:center;justify-content:center}
+.modal>.mc,.gmodal>.gm-card,.gmodal>.rmc,#fbm>.fbc{margin:auto}
+/* ---- Full box score (Play tab) and Games-tab box score: larger, centered ---- */
+#fbm .fbc{width:min(1320px,96vw);max-width:none;max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px);margin-top:0;padding:18px 22px}
+.fbh h2{justify-content:center;font-size:24px}
+#fbm .fb-period{grid-template-columns:44px minmax(0,320px) 44px}#fbm .fb-period strong,.gm-card .fb-period strong{font-size:17px}
+#fbm #tab table{font-size:15px;margin-bottom:0}#fbm #tab caption{font-size:22px;padding:6px 0 8px}
+#fbm #tab th,#fbm #tab td{padding:7px 10px}#fbm #tab th:first-child,#fbm #tab td:first-child{min-width:190px}
+.gm-card{width:min(1560px,96vw);max-width:none;margin-top:0;max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px);padding:18px 22px}
+.gm-h h2{font-size:26px}.gm-logo{max-width:210px;max-height:210px}
+.gm-box{gap:18px}.gm-box table{min-width:540px;font-size:14.5px;margin-bottom:0}.gm-box caption{font-size:20px;padding:4px 0 8px}
+.gm-box th,.gm-box td{padding:7px 9px}.gm-box th:first-child,.gm-box td:first-child{min-width:170px}
+.gm-ts{font-size:14px}
+/* ---- Box score hover: row + column crosshair (same as the Roster page) ---- */
+#fbm #tab table tr:hover td,.gm-box table tr:hover td{background:#1c2f4a}
+#fbm #tab table td.rcol,.gm-box table td.rcol{background:#1c2f4a}
+#fbm #tab table tr:hover td.rcol,.gm-box table tr:hover td.rcol{background:#2a4a74}
+#fbm #tab table th.rcol,.gm-box table th.rcol{background:#223a5c;color:#fff}
+#fbm #tab table td,.gm-box table td{border-bottom:1px solid rgba(53,80,74,.45)}
+/* ---- TOTAL TEAM STATS heading centered in its panel ---- */
+.team-stats-head h2{justify-content:center;text-align:center;width:100%}
+#teamPanel{text-align:center}
+@media(max-width:900px){.gm-card,#fbm .fbc{padding:12px}.gm-box table{min-width:480px}}
 
 /* ---- v5 roster workspace: wider panel and readable position controls ---- */
 .app.sg[data-screen=roster]{width:100%;max-width:none;margin:0;padding:12px clamp(12px,2vw,32px)}
@@ -3132,6 +3155,11 @@ const R_ABBR={speed:'SPD',agility:'AGI',strength:'STR',vertical:'VRT',stamina:'S
 document.addEventListener('mouseover',e=>{const c=e.target.closest&&e.target.closest('#scrroster .rwrap th,#scrroster .rwrap td');if(!c){clr();return}const t=c.closest('table'),i=c.cellIndex,cells=[...t.querySelectorAll('tr')].map(r=>r.cells[i]).filter(Boolean);if(cur&&cur[0]===cells[0])return;clr();cells.forEach(x=>x.classList.add('rcol'));cur=cells});
 document.addEventListener('mouseleave',clr);
 document.addEventListener('mouseout',e=>{if(!e.relatedTarget||!(e.relatedTarget.closest&&e.relatedTarget.closest('#scrroster .rwrap')))clr()})})();
+/* Box-score column highlight (Play tab Full Box Score + Games tab box score, every game mode). Row hover is pure CSS; the hovered column gets .rcol. */
+(function(){const SEL='#fbm #tab table th,#fbm #tab table td,#gmodal .gm-box table th,#gmodal .gm-box table td';let cur=null;const clr=()=>{if(cur){cur.forEach(c=>c.classList.remove('rcol'));cur=null}};
+document.addEventListener('mouseover',e=>{const c=e.target.closest&&e.target.closest(SEL);if(!c){clr();return}const t=c.closest('table'),i=c.cellIndex,cells=[...t.rows].map(r=>r.cells[i]).filter(Boolean);if(cur&&cur[0]===cells[0])return;clr();cells.forEach(x=>x.classList.add('rcol'));cur=cells});
+document.addEventListener('mouseout',e=>{const r=e.relatedTarget;if(!r||!(r.closest&&r.closest('#fbm #tab table,#gmodal .gm-box table')))clr()});
+window.addEventListener('blur',clr)})();
 const rVal=(p,f)=>f==='ovr'?p.ovr:f==='s3'?p.s3:f==='mid'?p.mid:f==='pas'?p.pas:p.attr[f.slice(5)];
 function rosterHTML(){const rows=rosterOf(XS.rt),get=p=>XS.rs==='n'?p.n:XS.rs==='pos'?p.pos:XS.rs==='ovr'?p.ovr:p.x[XS.rs],sorted=sortRows(rows,get,XS.rd),akeys=R_AKEYS,v=x=>x==null||!Number.isFinite(x)?'\u2013':Math.round(x),q=n=>JSON.stringify(n).replace(/&/g,'&amp;').replace(/"/g,'&quot;');
  return`<div class="bar"><label>Team <select onchange="xset('rt',this.value)">${TEAM_NAMES.map(t=>`<option value="${t[0]}"${t[0]===XS.rt?' selected':''}>${t[1]}</option>`).join('')}</select></label></div><div class="dim" style="font-size:11px">Click a player to edit their position, overall, and attributes. Ratings are 25\u201399. Changes save in this browser and apply to future games; edits to the team currently on court update immediately where possible.</div><div class="rwrap"><table><colgroup><col style="width:200px">${'<col style="width:64px">'.repeat(17)}</colgroup><thead><tr><th scope="col">Player</th><th scope="col" title="Position">Pos</th><th scope="col" title="Overall">OVR</th>${akeys.map(a=>`<th scope="col" title="${a[0]}">${R_ABBR[a[1]]}</th>`).join('')}<th scope="col" title="Three-point shot">3PT</th><th scope="col" title="Mid-range shot">MID</th><th scope="col" title="Passing">PAS</th></tr></thead><tbody>${sorted.map(p=>`<tr tabindex="0" role="button" aria-label="Edit ${String(p.n).replace(/"/g,'&quot;')}" onclick="rosterOpen(${q(p.n)})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();rosterOpen(${q(p.n)})}"><td>${p.n}</td><td>${p.pos}</td><td>${v(p.ovr)}</td>${akeys.map(a=>`<td>${v(p.attr[a[1]])}</td>`).join('')}<td>${v(p.s3)}</td><td>${v(p.mid)}</td><td>${v(p.pas)}</td></tr>`).join('')}</tbody></table></div>`}
