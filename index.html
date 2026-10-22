@@ -364,9 +364,9 @@ th.srt{cursor:pointer;user-select:none;white-space:nowrap}th.srt:hover,th.srt:fo
 #teamPanel{text-align:center}
 @media(max-width:900px){.gm-card,#fbm .fbc{padding:12px}.gm-box table{min-width:480px}}
 /* ---- Coaching defaults card: sits between the settings and the assistant coach ---- */
-.app.sc>aside>#cdPanel{grid-column:2 / span 2;grid-row:3;min-width:0}.app.sc>aside>#coachPanel{grid-row:4}
+.app.sc>aside>#cdPanel{grid-column:2 / span 2;grid-row:4;min-width:0}.app.sc>aside>#coachPanel{grid-row:5}
 #cdPanel .bar{display:flex;gap:8px;flex-wrap:wrap}
-@media(max-width:1100px){.app.sc>aside>#cdPanel{grid-column:1 / -1;grid-row:4}.app.sc>aside>#coachPanel{grid-row:5}}
+@media(max-width:1100px){.app.sc>aside>#cdPanel{grid-column:1 / -1;grid-row:5}.app.sc>aside>#coachPanel{grid-row:6}}
 @media(max-width:720px){.app.sc>aside>#cdPanel,.app.sc>aside>#coachPanel{grid-column:1;grid-row:auto}}
 
 /* ---- v5 roster workspace: wider panel and readable position controls ---- */
@@ -413,6 +413,53 @@ th.srt{cursor:pointer;user-select:none;white-space:nowrap}th.srt:hover,th.srt:fo
 @media(max-width:700px){.app.sg[data-screen=roster]{padding:8px}.app.sg[data-screen=roster] .card{padding:9px}#scrroster td select[aria-label$=" position"]{width:82px;min-width:82px}}
 
 :root{--zone-pg:#1C2E3D;--zone-sg:#4A0E17;--zone-sf:#2B3A22;--zone-pf:#262626;--zone-c:#0D0D0D}
+
+/* Game situations and responsive court controls */
+.bar:has(#pp){flex-wrap:nowrap;gap:clamp(3px,.55vw,8px);overflow-x:auto;overflow-y:hidden;white-space:nowrap;scrollbar-width:thin;padding-bottom:3px}
+.bar:has(#pp)>button{flex:0 0 auto;white-space:nowrap;padding:clamp(6px,.55vw,8px) clamp(5px,.75vw,12px);font-size:clamp(10px,1vw,13px)}
+#situPanel{display:none}
+.app[data-screen="play"]>#situPanel{display:block;grid-column:1;grid-row:1;align-self:start;margin:0 0 10px}
+.app[data-screen="play"]>#liveLogPanel{grid-column:1;grid-row:2}
+.app[data-screen="play"]>main{grid-row:1 / span 2}
+.app[data-screen="coaching"]>#situPanel{display:block;grid-column:2 / span 2;grid-row:3;align-self:start}
+.situation-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;align-items:center}
+.situation-item{display:grid;grid-template-columns:minmax(0,1fr) 96px;align-items:center;gap:8px;min-width:0;width:100%}
+.situation-item>span{font-size:13px;font-weight:700;text-align:left;white-space:normal}
+.situation-item>button{width:96px;min-width:96px;height:34px;padding:5px 8px;text-align:center;justify-self:end}
+.situation-state{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+#situPanel h2{text-align:center;margin-bottom:10px}
+/* Keep play-by-play directly beneath Game Situations in the left column. */
+.app.sp>#situPanel{grid-column:1!important;grid-row:1!important;align-self:start}
+.app.sp>#liveLogPanel{grid-column:1!important;grid-row:2!important;position:static!important;top:auto!important;max-height:calc(100vh - 100px)!important;align-self:start}
+.app.sp>main{grid-column:2!important;grid-row:1 / span 2!important}
+.app.sp>#playCol{grid-column:3!important;grid-row:1!important}
+/* Coaching situations and defaults are adjacent; rotation/substitutions remain in main below Assistant Coach. */
+.app.sc>#situPanel{grid-column:2 / span 2!important;grid-row:3!important}
+.app.sc>#cdPanel{display:block!important;grid-column:2 / span 2!important;grid-row:4!important;align-self:start;min-width:0}
+@media(max-width:1100px){
+ .app.sp{grid-template-columns:minmax(0,1fr)!important}
+ .app.sp>main{grid-column:1!important;grid-row:1!important}
+ .app.sp>#situPanel{grid-column:1!important;grid-row:2!important}
+ .app.sp>#liveLogPanel{grid-column:1!important;grid-row:3!important;position:static!important}
+ .app.sp>.situ-stack>#playSide{width:100%!important}
+ .app.sp>#playCol{grid-column:1!important;grid-row:4!important}
+ .app.sc>#situPanel{grid-column:1 / -1!important;grid-row:4!important}
+ .app.sc>#cdPanel{grid-column:1 / -1!important;grid-row:5!important}
+}
+@media(max-width:720px){.situation-item{grid-template-columns:minmax(0,1fr) 78px}.situation-item>button{width:78px;min-width:78px}.situation-item>span{font-size:12px}}
+
+/* Games-tab box-score modal refinements: larger logos and matchup-only heading. */
+#gmodal .gm-logo{max-width:280px;max-height:280px;width:100%;height:clamp(150px,22vw,280px);object-fit:contain}
+#gmodal .gm-top{grid-template-columns:minmax(0,1fr) minmax(280px,520px) minmax(0,1fr)}
+@media(max-width:700px){#gmodal .gm-logo{max-width:170px;max-height:170px;height:clamp(110px,34vw,170px)}#gmodal .gm-top{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+
+/* Final sizing corrections requested: derive panel dimensions from their matching content/panel. */
+.app.sp>#playCol>#teamPanel{height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;align-self:start!important}
+.app.sp>.situ-stack>#playSide{height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;align-self:start!important}
+.app.sp>.situ-stack>#liveLogPanel{flex:0 0 auto!important;overflow:hidden!important}
+.app.sp>.situ-stack>#liveLogPanel #liveLog{min-height:0!important;overflow-y:auto!important;flex:1 1 auto!important}
+@media(max-width:1100px){.app.sp>.situ-stack>#liveLogPanel{height:auto!important;min-height:0!important;max-height:none!important}}
+
 </style>
 <style>
 #liveLogPanel{display:flex;flex-direction:column;overflow:hidden}
@@ -458,7 +505,7 @@ h1,h2,.nm,.sc,#clk,#sc24,#qtr,caption,.brand{font-family:'Barlow Condensed','Ari
 .gtabs button[aria-selected=true]{background:#fff;color:#08090d;border:0}
 /* panels */
 .card{background:linear-gradient(180deg,rgba(24,27,36,.96),rgba(13,15,21,.97));border:1px solid var(--line);border-top:3px solid #fff;border-radius:0;box-shadow:0 14px 34px rgba(0,0,0,.5);clip-path:polygon(0 0,calc(100% - var(--cut)) 0,100% var(--cut),100% 100%,0 100%)}
-#liveLogPanel .card,#liveLogPanel{border-top-color:var(--gold)}
+#liveLogPanel .card,#liveLogPanel{border-top-color:#fff}
 h2{font-size:20px;font-weight:800;letter-spacing:.8px;color:#fff;display:flex;align-items:center;gap:9px}
 h2:before{content:"";width:9px;height:18px;background:var(--gold);transform:skewX(-18deg);flex:none}
 #liveLogPanel h2:before,.team-stats-head h2:before,.fbh h2:before,.mh h2:before{background:var(--gold)}
@@ -801,13 +848,234 @@ body.quick #gnav .brand:after{content:none!important}
 #selMe,.qs .pick select{text-align:center;text-align-last:center}#selMe option,.qs .pick select option{text-align:center}
 /* light edge around team logos on the team-select screens so dark logos stay readable */
 .qs img,#start .ssteam img{filter:drop-shadow(0 0 1.5px #fff) drop-shadow(0 0 1.5px #fff) drop-shadow(0 0 5px rgba(255,255,255,.65)) drop-shadow(0 6px 14px rgba(0,0,0,.5))!important}
+
+/* Play layout: Play-by-play and On-court Box Score share the left column; court stays centered, situations and team stats stay right. */
+.app.sp{grid-template-columns:minmax(300px,340px) minmax(0,1fr) minmax(300px,340px)!important;align-items:start}
+.app.sp>.situ-stack{grid-column:1!important;grid-row:1!important;display:flex;flex-direction:column;gap:8px;min-width:0;width:100%;align-self:start}
+.app.sp>.situ-stack>#situPanel{display:none!important;grid-column:auto;grid-row:auto;margin:0;align-self:stretch}
+.app.sp>.situ-stack>#liveLogPanel{display:flex;position:static!important;grid-column:auto;grid-row:auto;width:100%;max-height:calc(100vh - 100px)!important;min-width:0;align-self:stretch;margin:0}
+.app.sp>.situ-stack>#playSide{display:block!important;width:100%;min-width:0;align-self:stretch;margin:0}
+.app.sp>main{grid-column:2!important;grid-row:1!important;min-width:0}
+.app.sp>#playCol{grid-column:3!important;grid-row:1!important;min-width:0;align-self:start;display:flex;flex-direction:column;gap:10px}
+.app.sp>#playCol>#situPanel{display:block!important;width:100%;min-width:0;align-self:stretch;margin:0}
+.app.sp>#playCol>#teamPanel{width:100%;min-width:0;align-self:stretch}
+.app.sc{grid-template-columns:minmax(0,390px) minmax(0,1fr) minmax(0,1fr)!important;grid-template-rows:auto auto auto auto;align-items:start}
+.app.sc>main{grid-column:1!important;grid-row:1 / span 4!important;min-width:0}
+.app.sc>aside{display:contents!important}
+.app.sc>aside>#offPanel{grid-column:2!important;grid-row:1!important;min-width:0}
+.app.sc>aside>#slPanel{grid-column:2!important;grid-row:2!important;min-width:0}
+.app.sc>aside>#defPanel{grid-column:3!important;grid-row:1 / span 2!important;min-width:0}
+.app.sc>aside>#situPanel{display:block!important;grid-column:2!important;grid-row:3!important;align-self:stretch;margin:0;min-width:0}
+.app.sc>aside>#cdPanel{display:block!important;grid-column:3!important;grid-row:3!important;align-self:stretch;min-width:0;margin:0}
+.app.sc>aside>#coachPanel{grid-column:2 / span 2!important;grid-row:4!important;min-width:0}
+@media(max-width:1100px){.app.sp{grid-template-columns:minmax(0,1fr)!important}.app.sp>main{grid-column:1!important;grid-row:1!important}.app.sp>.situ-stack{grid-column:1!important;grid-row:2!important}.app.sp>#playCol{grid-column:1!important;grid-row:3!important;position:static!important;max-height:none!important;flex-direction:column!important}.app.sc{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important}.app.sc>main{grid-column:1 / -1!important;grid-row:1!important}.app.sc>aside{display:contents!important}.app.sc>aside>#offPanel{grid-column:1!important;grid-row:2!important}.app.sc>aside>#slPanel{grid-column:1!important;grid-row:3!important}.app.sc>aside>#defPanel{grid-column:2!important;grid-row:2 / span 2!important}.app.sc>aside>#situPanel{grid-column:1!important;grid-row:4!important}.app.sc>aside>#cdPanel{grid-column:2!important;grid-row:4!important}.app.sc>aside>#coachPanel{grid-column:1 / -1!important;grid-row:5!important}}
+@media(max-width:720px){.app.sc{grid-template-columns:minmax(0,1fr)!important}.app.sc>aside>#offPanel,.app.sc>aside>#slPanel,.app.sc>aside>#defPanel,.app.sc>aside>#situPanel,.app.sc>aside>#cdPanel,.app.sc>aside>#coachPanel{grid-column:1!important;grid-row:auto!important}}
+
+/* Corrected Play screen panel styling */
+#liveLogPanel h2:before{
+  content:""!important;
+  display:block!important;
+  width:9px!important;
+  height:18px!important;
+  background:var(--gold)!important;
+  transform:skewX(-18deg)!important;
+  margin-right:0!important;
+}
+#playSide .ph h2:before{display:none!important;content:none!important}
+#playSide .ph{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  position:relative!important;
+  min-height:28px;
+  margin-bottom:6px!important;
+  background:transparent!important;
+  border:0!important;
+  text-align:center!important;
+}
+#playSide .ph h2{
+  display:block!important;
+  flex:1 1 auto!important;
+  width:100%!important;
+  text-align:center!important;
+  margin:0!important;
+}
+#playSide .ph #fbBtn{
+  position:absolute!important;
+  right:0!important;
+  top:50%!important;
+  transform:translateY(-50%)!important;
+  font-size:0!important;
+  min-width:52px!important;
+  padding:4px 8px!important;
+}
+#playSide .ph #fbBtn:after{content:"Full";font-size:12px}
+#sbd{border-top:3px solid #fff!important}
+.app.sp>#playCol>#teamPanel,
+.app.sp>.situ-stack>#playSide{
+  height:395px!important;
+  min-height:395px!important;
+  max-height:395px!important;
+  width:100%!important;
+  min-width:0!important;
+  box-sizing:border-box!important;
+}
+.app.sp>.situ-stack>#playSide{overflow:auto!important}
+.app.sp>#playCol>#teamPanel{overflow:auto!important}
+@media(max-width:1100px){
+ .app.sp>#playCol>#teamPanel,
+ .app.sp>.situ-stack>#playSide{
+   height:auto!important;min-height:0!important;max-height:none!important;
+ }
+}
+
+
+/* User-requested layout corrections (October 22) */
+/* Play screen: Play-by-Play above the on-court box score; keep the log panel's size fixed and scroll its contents. */
+.app.sp>.situ-stack>#liveLogPanel{order:0!important;flex:0 0 216px!important;height:216px!important;min-height:216px!important;max-height:216px!important;overflow:hidden!important;align-self:stretch!important}
+.app.sp>.situ-stack>#liveLogPanel #liveLog{min-height:0!important;overflow-y:auto!important;flex:1 1 auto!important}
+.app.sp>.situ-stack>#playSide{order:1!important}
+/* Give both stats panels the same, increased height. */
+.app.sp>#playCol>#teamPanel,
+.app.sp>.situ-stack>#playSide{height:470px!important;min-height:470px!important;max-height:470px!important;box-sizing:border-box!important}
+.app.sp>#playCol>#teamPanel{overflow-y:auto!important}
+.app.sp>.situ-stack>#playSide{overflow-y:auto!important}
+/* Coaching layout: Game Situations sits above Player Positioning. */
+.app.sc>aside>#situPanel{grid-column:2!important;grid-row:2!important;align-self:stretch!important}
+.app.sc>aside>#slPanel{grid-column:2!important;grid-row:3!important;align-self:stretch!important}
+.app.sc>aside>#defPanel{grid-column:3!important;grid-row:1 / span 3!important}
+/* Defaults are placed immediately after Assistant Coach in the main column and match its dimensions. */
+.app.sc>main>#cdPanel{display:block!important;width:100%!important;min-width:0!important;box-sizing:border-box!important;flex:0 0 auto!important;margin:0 0 12px!important}
+.app.sc>main>#coachPanel{width:100%!important;min-width:0!important;box-sizing:border-box!important}
+/* Bench divider aligns with the player-name column/header and has breathing room above and below. */
+#rot{position:relative!important}
+#rot #sepl{left:0!important;right:0!important;padding-left:34px!important;box-sizing:border-box!important;display:flex!important;align-items:center!important;height:26px!important;margin:0!important;font-size:12px!important;font-weight:700!important;letter-spacing:.04em!important;color:#a9bbd5!important;background:transparent!important}
+#rot #sepl:before{content:"";position:absolute;left:0;right:0;top:0;border-top:1px solid rgba(169,187,213,.22)}
+@media(max-width:1100px){
+ .app.sp>.situ-stack>#liveLogPanel{flex-basis:216px!important;height:216px!important;min-height:216px!important;max-height:216px!important}
+ .app.sp>#playCol>#teamPanel,.app.sp>.situ-stack>#playSide{height:470px!important;min-height:470px!important;max-height:470px!important}
+ .app.sc>aside>#situPanel{grid-column:1!important;grid-row:4!important}
+ .app.sc>aside>#slPanel{grid-column:1!important;grid-row:5!important}
+ .app.sc>aside>#defPanel{grid-column:2!important;grid-row:2 / span 4!important}
+ .app.sc>main>#cdPanel{width:100%!important}
+}
+@media(max-width:720px){
+ .app.sp>.situ-stack>#liveLogPanel{height:216px!important;min-height:216px!important;max-height:216px!important}
+ .app.sp>#playCol>#teamPanel,.app.sp>.situ-stack>#playSide{height:470px!important;min-height:470px!important;max-height:470px!important}
+ .app.sc>aside>#situPanel,.app.sc>aside>#slPanel,.app.sc>aside>#defPanel{grid-column:1!important;grid-row:auto!important}
+}
+
+</style>
+
+<style id="quick-game-panel-fit-final">
+/* Keep every Quick Game team card the same size, large enough for long nicknames.
+   Dropdown styles and dimensions are intentionally not overridden. */
+#qg .qgt{
+  grid-template-columns:minmax(0,660px) auto minmax(0,660px)!important;
+  justify-content:center!important;
+  align-items:stretch!important;
+}
+#qg .qgt>.qs{
+  width:100%!important;
+  max-width:660px!important;
+  height:540px!important;
+  min-height:540px!important;
+  box-sizing:border-box!important;
+}
+#qg .qgt>.qs .nick{
+  width:100%;
+  max-width:100%!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  overflow-wrap:normal!important;
+  word-break:normal!important;
+  text-overflow:clip;
+}
+@media(max-width:900px){
+  #qg .qgt{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:clamp(12px,3vw,24px)!important}
+  #qg .qgt>.qs{width:100%!important;max-width:660px!important;height:540px!important;min-height:540px!important}
+}
+@media(max-width:560px){
+  #qg .qgt>.qs{height:500px!important;min-height:500px!important}
+  #qg .qgt>.qs .nick{font-size:clamp(30px,8vw,68px)!important}
+}
+</style>
+<style id="quick-game-selector-lowered">
+/* Keep team names fully visible and place the selectors below the highlighted panel. */
+#qg .qs .nick{line-height:1.08!important;flex:0 0 auto!important}
+#qg .qs .pick{transform:translateY(52px)!important;margin-top:12px!important;position:relative!important;z-index:2}
+#qg .qgt{overflow:visible!important}
+#qg .qgt>.qs{overflow:visible!important}
+@media(max-width:560px){#qg .qs .pick{transform:translateY(38px)!important}}
+</style>
+
+<style id="quick-game-uniform-highlight-panel-fix">
+/* Normalize selected/unselected team cards so no team (including Pelicans)
+   can change the highlighted panel's outer dimensions. */
+#qg .qgt{grid-template-columns:minmax(0,660px) auto minmax(0,660px)!important;align-items:stretch!important}
+#qg .qgt>.qs, #qg .qgt>.qs.sel{
+  width:660px!important; min-width:0!important; max-width:660px!important;
+  height:540px!important; min-height:540px!important; max-height:540px!important;
+  box-sizing:border-box!important; flex:0 0 660px!important;
+  border-width:2px!important;
+}
+@media(max-width:900px){
+  #qg .qgt{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important}
+  #qg .qgt>.qs, #qg .qgt>.qs.sel{width:100%!important;max-width:100%!important;min-width:0!important;flex:initial!important}
+}
+@media(max-width:560px){
+  #qg .qgt>.qs, #qg .qgt>.qs.sel{height:500px!important;min-height:500px!important;max-height:500px!important}
+}
+</style>
+
+
+<style id="quick-game-selector-fixed-position">
+/* Anchor each selector to the fixed card bottom so team nickname metrics cannot move it. */
+#qg .qgt>.qs{position:relative!important}
+#qg .qgt>.qs .pick{
+  position:absolute!important;
+  top:calc(100% + 12px)!important;
+  bottom:auto!important;
+  left:50%!important;
+  transform:translateX(-50%)!important;
+  margin:0!important;
+  z-index:3!important;
+}
+@media(max-width:560px){
+  #qg .qgt>.qs .pick{top:calc(100% + 10px)!important;transform:translateX(-50%)!important}
+}
+</style>
+
+
+<style id="quick-game-team-name-white-outline">
+/* Give every Quick Game nickname a consistent white outline while preserving its team fill color. */
+#qg .qgt > .qs .nick{
+  -webkit-text-stroke: 1.5px #fff !important;
+  paint-order: stroke fill;
+  text-shadow: 0 0 2px #fff, 0 0 8px rgba(255,255,255,.28) !important;
+}
+</style>
+<style id="season-team-name-white-outline">
+/* Match the white outline on Quick Game team nicknames in the Season team selector. */
+#start #ssNick{
+  -webkit-text-stroke: 1.5px #fff !important;
+  paint-order: stroke fill;
+  text-shadow: 0 0 2px #fff, 0 0 8px rgba(255,255,255,.28) !important;
+}
+</style>
+
+<style id="roster-team-navigation">
+#scrroster .roster-team-nav{display:grid;grid-template-columns:42px minmax(220px,360px) 42px;align-items:center;justify-content:center;gap:12px;width:100%;margin:0 auto 12px;position:relative}
+#scrroster .roster-team-nav>button{min-width:42px;height:34px;padding:0;display:flex;align-items:center;justify-content:center;text-align:center;font-size:22px;font-weight:800;line-height:1}
+#scrroster .roster-team-title{display:none}#scrroster .roster-team-select-label{grid-column:2;grid-row:1;position:static;width:100%;min-width:0}#scrroster .roster-team-select-label select{display:block;box-sizing:border-box;width:100%;min-width:0;height:42px;text-align:center;text-align-last:center;font:600 clamp(21px,2.8vw,32px)/normal 'Barlow Condensed',sans-serif;text-transform:uppercase;padding:0 30px;background:#0a0b10;border:1px solid #333847;border-bottom:2px solid var(--gold);border-radius:0;font-weight:600;color:#fff}#scrroster .roster-team-nav>button:first-child{grid-column:1;grid-row:1}#scrroster .roster-team-nav>button:nth-child(3){grid-column:3;grid-row:1}
+@media(max-width:650px){#scrroster .roster-team-nav{grid-template-columns:38px minmax(0,1fr) 38px;gap:6px}#scrroster .roster-team-select-label select{font-size:clamp(17px,4.5vw,24px);padding:0 18px}}
 </style>
 </head>
 <body>
 <div id="start" role="dialog" aria-label="Season"><div class="card"><h1>Season</h1><div class="dim">Coach a real roster through a full season, or a shorter one for testing.</div><div class="qs ssteam" id="ssTeam"><div class="tag">YOUR TEAM</div><img id="ssImg" alt=""><div class="city" id="ssCity"></div><div class="nick" id="ssNick"></div><div class="pick"><button type="button" data-ssd="-1" aria-label="Previous team">&lt;</button><select id="selMe" aria-label="Your team"></select><button type="button" data-ssd="1" aria-label="Next team">&gt;</button></div></div><div class="sfs"><div class="sf"><label>Difficulty</label><select id="selDiff"></select><p id="diffDesc" class="dim" style="margin:6px 0 0;font-size:14px;min-height:2.4em"></p></div><div class="sf"><label>Number of games</label><select id="selLen"></select></div></div><p id="contInfo" class="dim"></p><div class="bar"><button id="goNew" type="button" style="background:var(--gold);color:#16221e;border-color:var(--gold)">New season</button><button id="goCont" type="button">Continue season</button><div id="warn" role="status" aria-live="polite"></div></div></div></div>
-<div id="fbm" class="modal hide" role="dialog" aria-modal="true" aria-label="Full box score"><div class="mc fbc"><div class="fbh"><button id="fbPrev" type="button" aria-label="Previous team">&lt;</button><h2 id="fbTitle">Box score</h2><button id="fbNext" type="button" aria-label="Next team">&gt;</button><button id="fbClose" type="button" aria-label="Close box score">&#10005; Close</button></div><div id="tab"></div></div></div>
+<div id="fbm" class="modal hide" role="dialog" aria-modal="true" aria-label="Full box score"><div class="mc fbc"><div class="fbh"><button id="fbPrev" type="button" aria-label="Previous team">&lt;</button><h2 id="fbTitle">Box score</h2><button id="fbNext" type="button" aria-label="Next team">&gt;</button><button id="fbClose" type="button" aria-label="Close box score">&#10005;</button></div><div id="tab"></div></div></div>
 <div id="slDef" class="modal hide" role="dialog" aria-modal="true" aria-label="Default shot locations"><div class="mc"><div class="mh"><h2>Default shot locations</h2><span class="dim">Saved automatically. Applied at the start of every new game. Pick each player's 1st, 2nd and 3rd scoring spot.</span></div>
- <div class="slbar"><select id="slTeam" aria-label="Team"></select><button type="button" id="slReset">Reset team to rating-based defaults</button><span id="slSaved" class="dim" aria-live="polite"></span><button type="button" id="slClose" style="margin-left:auto">Close</button></div><div id="slDefBody"></div></div></div>
+ <div class="slbar"><select id="slTeam" aria-label="Team"></select><button type="button" id="slReset">Reset team to rating-based defaults</button><span id="slSaved" class="dim" aria-live="polite"></span><button type="button" id="slClose" style="margin-left:auto">X</button></div><div id="slDefBody"></div></div></div>
 <div id="timeoutm" class="modal hide" role="dialog" aria-modal="true" aria-label="Opponent timeout"><div class="mc" style="max-width:520px"><div class="mh"><h2 id="timeoutTitle">Opponent timeout</h2><span class="dim">Make or review substitutions during the timeout.</span></div><div id="timeoutBody" class="dim" style="margin:12px 0"></div><div class="bar"><button type="button" id="timeoutCoach">Open Coaching</button><button type="button" id="timeoutResume" style="background:var(--gold);color:#16221e;border-color:var(--gold)">Resume game</button></div></div></div>
 <div id="playm" class="modal hide" role="dialog" aria-label="Playbook"><div class="mc"><div class="mh"><h2>The playbook</h2><span id="pmctx" class="dim"></span></div><div class="mg"><div id="pbook"></div><div class="pright"><canvas id="pc"></canvas><div id="pdesc" class="dim"></div><div id="pshoot"></div><div class="bar" style="margin-top:8px"><button id="prun" style="background:var(--gold);color:#16221e;border-color:var(--gold)">Run this play</button><button id="pno">No play</button></div></div></div></div></div>
 <div id="home" class="hide" role="dialog" aria-label="Home">
@@ -829,9 +1097,9 @@ body.quick #gnav .brand:after{content:none!important}
 <button type="button" id="homeBack" aria-label="Back to home" title="Back to home"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12H5M11 5l-7 7 7 7"/></svg></button>
 <div id="pageTitle" aria-hidden="true"></div>
 <header id="gnav"><span class="brand">Head Coach</span><nav class="gtabs" role="tablist" aria-label="Primary navigation"></nav><span id="gcur"></span><button id="gburger" type="button" aria-label="Open navigation menu" aria-expanded="false" aria-controls="gdrawer">&#9776;</button></header>
-<div class="gscrim hide" id="gscrim"></div><aside class="gdrawer" id="gdrawer" aria-hidden="true" aria-label="Primary navigation menu"><button class="gx" id="gclose" type="button" aria-label="Close navigation menu">&#10005; Close</button></aside>
+<div class="gscrim hide" id="gscrim"></div><aside class="gdrawer" id="gdrawer" aria-hidden="true" aria-label="Primary navigation menu"><button class="gx" id="gclose" type="button" aria-label="Close navigation menu">&#10005;</button></aside>
 <div class="app">
- <section class="card" id="liveLogPanel"><h2>Play-by-play</h2><div id="pbqBar" class="bar" role="group" aria-label="Quarter"></div><div id="liveLog" style="max-height:260px;overflow:auto;font-size:13px"></div><label class="ck"><input type="checkbox" id="debugMode"> Passing decision diagnostics</label><div id="debugLog" class="dim" style="font-size:11px;max-height:180px;overflow:auto"></div></section>
+ <section class="card" id="liveLogPanel"><h2>Play-by-play</h2><div id="pbqBar" class="bar" role="group" aria-label="Quarter"></div><div id="liveLog" style="max-height:260px;overflow:auto;font-size:13px"></div></section>
 <main>
  <section class="card sb" id="sbd">
   <div class="t home" id="s0"><div class="lgbox"><img class="lg" id="lg0" alt=""></div><div class="tx"><span class="nm"></span><span class="score-fouls" id="bn0" title="Team fouls this quarter"></span><b class="sc">0</b></div></div>
@@ -842,8 +1110,17 @@ body.quick #gnav .brand:after{content:none!important}
  <div class="bar">
   <button id="pp">Play</button><button id="sfxBtn" type="button" aria-pressed="true" title="Referee whistle and buzzer sounds">🔊 Sound</button>
   <button data-sp="0" class="on">1x</button><button data-sp="1">2x</button><button data-sp="2">4x</button><button data-sp="3">8x</button>
-  <button id="to">Timeout</button><button id="hackBtn" type="button" aria-pressed="false" title="Foul the ball handler on purpose">Intentional foul: Off</button><button id="sq">Sim quarter</button><button id="sg">Sim game</button>
+  <button id="sq">Sim quarter</button><button id="sg">Sim game</button>
  </div>
+ <section class="card" id="situPanel"><h2>Game situations</h2>
+  <div class="situation-grid">
+   <div class="situation-item"><span>Timeout:</span><button id="to">Request</button></div>
+   <div class="situation-item"><span>Intentional Foul:</span><button id="hackBtn" type="button" aria-pressed="false" title="Foul the ball handler on purpose">Off</button></div>
+   <div class="situation-item"><span>Force 3pt:</span><button type="button" id="f3Btn">Off</button><input class="situation-state" type="checkbox" id="f3" aria-label="Force 3"></div>
+   <div class="situation-item"><span>Pick and Roll:</span><button type="button" id="drvBtn">On</button><input class="situation-state" type="checkbox" id="drvOn" checked aria-label="Pick and roll"></div>
+   <div class="situation-item"><span>Auto Sub:</span><button type="button" id="autoBtn">Off</button><input class="situation-state" type="checkbox" id="auto" aria-label="Auto sub"></div>
+  </div>
+ </section>
  <section class="card"><h2>Rotation & substitutions</h2>
   <div id="posPanel"><div class="pp-head"><span id="swapMsg" class="dim" aria-live="polite">Click a player, then another to swap them.</span><button id="posReset" type="button" title="Restore every player\'s natural position">Reset positions</button><button id="lineupSave" type="button" title="Use the five players currently set to start as the starting lineup for every future game">Set default lineup</button><button id="lineupClear" type="button" title="Go back to the automatic starting lineup">Clear default</button></div></div><div class="rh"><span></span><span>Player</span><span>Energy (%)</span><span>PF</span><span>Pts</span><span></span></div><div id="rot" class="rotl"></div><div class="dim" style="margin-top:8px;font-size:11px">Click a player, then another. Two on court or two on the bench swap positions; one on court and one on the bench is a substitution (applied at the next dead ball).</div></section>
 </main>
@@ -854,9 +1131,8 @@ body.quick #gnav .brand:after{content:none!important}
    <label>Shot profile</label><select id="shotprofile"><option value="balanced">Balanced</option><option value="rim">Rim pressure</option><option value="mid">Mid-range</option><option value="three">Three-point heavy</option></select>
    <label>Points of emphasis</label><select id="emph"><option value="none">No preference</option><option value="neutral">Neutral offensive focus</option><option value="basket">Get to the basket</option><option value="shooters">Get shooters open</option><option value="post">Feed the post</option><option value="pnr">Pick &amp; roll offense</option><option value="star" selected>Play through star</option></select>
    <label>Strategy</label><select id="gameplan"><option value="balanced">Balanced</option><option value="attack">Attack the paint</option><option value="perimeter">Hunt open threes</option><option value="star">Feature best scorer</option><option value="protect">Protect the lead</option><option value="comeback">Push for a comeback</option></select>
-   <label class="ck"><input type="checkbox" id="drvOn" checked> Drive when there is no open shot (4-Out-1-In)</label>
  </section>
- <section class="card" id="slPanel"><div class="slh"><h2>Player shot locations</h2><button type="button" id="slDefBtn" class="btn" title="Edit and save default shot locations for every roster player">Defaults</button></div>
+ <section class="card" id="slPanel"><div class="slh"><h2>Player Positioning</h2><button type="button" id="slDefBtn" class="btn" title="Edit and save default shot locations for every roster player">Defaults</button></div>
    <div class="slnote">Choose each player's first, second and third preferred scoring spot. Higher-rated players win contested spots; players then try their next choice. Changes apply to this game from the next possession; use Defaults to save them.</div>
    <div id="slBody"></div>
  </section>
@@ -882,9 +1158,8 @@ body.quick #gnav .brand:after{content:none!important}
    <label>Pressure <output id="gl"></output></label><input type="range" id="gam" min="0" max="100" value="50">
    <label>Pick-and-roll coverage</label><select id="cov"></select>
    <label>Rebounding / transition balance</label><select id="rebstrat"><option value="auto">No Preference (personnel-based)</option><option value="back1">Limit Transition (1 rebounder)</option><option value="bal2">Some Crash / Others Get Back (2)</option><option value="crash3">Crash Offensive Glass (3)</option></select>
-   <label class="ck"><input type="checkbox" id="auto"> Auto-sub tired players</label>
  </section>
- <section class="card" id="cdPanel"><h2>Coaching defaults</h2><div class="dim" style="font-size:12px;line-height:1.4">Save the offense, defense, tempo, pressure, coverage, rebounding and auto-sub settings above as your defaults, so every future game starts with them. Change them again any time, for example after finding a better system mid-season.</div><div class="bar" style="margin-top:8px"><button type="button" id="coachDefSave" title="Use the current coaching settings at the start of every future game">Save current as default</button><button type="button" id="coachDefReset" title="Go back to the original defaults">Reset to original</button></div><div id="coachDefMsg" class="dim" aria-live="polite" style="margin-top:6px;font-size:12px"></div></section>
+ <section class="card" id="cdPanel"><h2>Coaching defaults</h2><div class="bar" style="margin-top:8px"><button type="button" id="coachDefSave" title="Use the current coaching settings at the start of every future game">Save current as default</button><button type="button" id="coachDefReset" title="Go back to the original defaults">Reset to original</button></div><div id="coachDefMsg" class="dim" aria-live="polite" style="margin-top:6px;font-size:12px"></div></section>
  <section class="card" id="coachPanel"><h2>Assistant coach</h2><ul id="tips"></ul></section>
  <div id="legacySides" hidden><div id="side0"><div id="courtbox"></div></div><div id="side2" class="hide"><div class="dim" style="margin-bottom:6px">Opponent rotation (queued changes take effect at the next dead ball).</div><div class="rh"><span></span><span>Player</span><span>Energy (%)</span><span>PF</span><span>Pts</span><span></span></div><div id="oppRot" class="rotl"></div></div><div id="side3" class="hide"><div class="dim" style="margin-bottom:6px">Estimated player attributes · ratings are gameplay estimates, not verified tracking data.</div><label>Player</label><select id="scoutPlayer"></select><div id="scoutCard"></div></div></div>
 </aside>
@@ -910,7 +1185,7 @@ const QK={on:false,rv:false,away:'SAS',home:'NYK',coach:'none'};   // coach: 'aw
 const cpuT=t=>t===1||(QK.on&&QK.coach==='none');   // quick-game setup + mode flag (see QUICK GAME MODE)
 let activeScreen='play',gv='results',navOpen=false;
 const TEAM_NAMES=[
-['ATL','Atlanta Hawks','East'],['BOS','Boston Celtics','East'],['BKN','Brooklyn Nets','East'],['CHA','Charlotte Hornets','East'],['CHI','Chicago Bulls','East'],['CLE','Cleveland Cavaliers','East'],['DAL','Dallas Mavericks','West'],['DEN','Denver Nuggets','West'],['DET','Detroit Pistons','East'],['GSW','Golden State Warriors','West'],['HOU','Houston Rockets','West'],['IND','Indiana Pacers','East'],['LAC','LA Clippers','West'],['LAL','Los Angeles Lakers','West'],['MEM','Memphis Grizzlies','West'],['MIA','Miami Heat','East'],['MIL','Milwaukee Bucks','East'],['MIN','Minnesota Timberwolves','West'],['NOP','New Orleans Pelicans','West'],['NYK','New York Knicks','East'],['OKC','Oklahoma City Thunder','West'],['ORL','Orlando Magic','East'],['PHI','Philadelphia 76ers','East'],['PHX','Phoenix Suns','West'],['POR','Portland Trail Blazers','West'],['SAC','Sacramento Kings','West'],['SAS','San Antonio Spurs','West'],['TOR','Toronto Raptors','East'],['UTA','Utah Jazz','West'],['WAS','Washington Wizards','East']];
+['ATL','Atlanta Hawks','East'],['BOS','Boston Celtics','East'],['BKN','Brooklyn Nets','East'],['CHA','Charlotte Hornets','East'],['CHI','Chicago Bulls','East'],['CLE','Cleveland Cavaliers','East'],['DAL','Dallas Mavericks','West'],['DEN','Denver Nuggets','West'],['DET','Detroit Pistons','East'],['GSW','Golden State Warriors','West'],['HOU','Houston Rockets','West'],['IND','Indiana Pacers','East'],['LAC','Los Angeles Clippers','West'],['LAL','Los Angeles Lakers','West'],['MEM','Memphis Grizzlies','West'],['MIA','Miami Heat','East'],['MIL','Milwaukee Bucks','East'],['MIN','Minnesota Timberwolves','West'],['NOP','New Orleans Pelicans','West'],['NYK','New York Knicks','East'],['OKC','Oklahoma City Thunder','West'],['ORL','Orlando Magic','East'],['PHI','Philadelphia 76ers','East'],['PHX','Phoenix Suns','West'],['POR','Portland Trail Blazers','West'],['SAC','Sacramento Kings','West'],['SAS','San Antonio Spurs','West'],['TOR','Toronto Raptors','East'],['UTA','Utah Jazz','West'],['WAS','Washington Wizards','East']];
 /* Team rosters and ratings imported from validated NBA 2K27 API records. This build contains 553 of the API-reported 653 records; Free Agency records are retained in API_PLAYER_DATA but are not assigned to NBA teams. */
 const SEEDS={"ATL":["Jalen Johnson","C.J. McCollum","Nickeil Alexander-Walker","Dyson Daniels","Onyeka Okongwu","Luguentz Dort","Aaron Wiggins","Jock Landale","Jalen Wilson","Zuby Ejiofor","Henri Veesaar","RayJ Dennis","Keshon Gilbert"],"BOS":["Jayson Tatum","Derrick White","Paul George","Payton Pritchard","Mitchell Robinson","Neemias Queta","Sam Hauser","Baylor Scheierman","Hugo Gonzalez","Luka Garza","Mike Conley","Jordan Walsh","Chris Cenac Jr.","Ron Harper Jr.","Amari Williams","Dillon Mitchell"],"BKN":["Michael Porter Jr.","Julius Randle","Egor Demin","Keon Ellis","Noah Clowney","Nolan Traore","Danny Wolf","Day’Ron Sharpe","Terance Mann","Chaney Johnson","Grant Nelson","Joshua Jefferson","Tyler Bilodeau","Mikel Brown Jr.","Ben Saraf"],"CHA":["Brandon Miller","Kon Knueppel","Naz Reid","Coby White","Grayson Allen","Moussa Diabate","Ryan Kalkbrenner","Dennis Schroder","Royce O’Neale","Grant Williams","Sion James","Hannes Steinbach","Liam McNeeley","Pat Connaughton","Christian Anderson","P.J. Hall","Kylan Boswell","Michael Ajayi"],"CHI":["Josh Giddey","Norman Powell","Matas Buzelis","Nicolas Claxton","Tre Jones","Caleb Wilson","Jalen Smith","Isaac Okoro","Zach Collins","Patrick Williams","Dailyn Swain","Jordan Hawkins","Jaylin Sellers","Tobe Awaka","Buddy Hield"],"CLE":["Donovan Mitchell","Evan Mobley","James Harden","Jarrett Allen","Peyton Watson","Sam Merrill","Jaylon Tyson","Thomas Bryant","Nae’Qwan Tomlin","Tyrese Proctor","Meleek Thomas","Ernest Udeh Jr.","Khalifa Diop","Riley Minix","Tristan Enaruna","Craig Porter Jr."],"DAL":["Cooper Flagg","Kyrie Irving","Daniel Gafford","Dereck Lively II","Naji Marshall","P.J. Washington","Santi Aldama","Zaccharie Risacher","Max Christie","Dwight Powell","Jett Howard","Moussa Cisse","Tarik Biberovic","John Poulakidas","Sergio De Larrea","Tobi Lawal","Marcus Sasser","Caleb Martin"],"DEN":["Nikola Jokic","Jamal Murray","Aaron Gordon","DeMar DeRozan","Cameron Johnson","Christian Braun","Marvin Bagley III","Julian Strawther","Ryan Nembhard","Alpha Diallo","DaRon Holmes II","Zeke Nnaji","Trevon Brazile","Bryce Hopkins","Tyus Jones","Spencer Jones","Cam Whitmore"],"DET":["Cade Cunningham","Ausar Thompson","Jalen Duren","Daniss Jenkins","Duncan Robinson","John Collins","Isaiah Joe","Paul Reed","Javonte Green","Kevin Huerter","Ron Holland","Ebuka Okorie","Elijah Harkless","Isaac Jones","Ugonna Onyenso","Chaz Lanier","Tolu Smith"],"GSW":["Stephen Curry","Jimmy Butler","Kristaps Porzingis","Brandin Podziemski","Draymond Green","Gui Santos","Al Horford","Brandon Williams","De’Anthony Melton","Moses Moody","Gary Payton II","Will Richard","Charles Bassey","Dalen Terry","Georges Niang","L.J. Cryer","Malevy Leons","Graham Ike"],"HOU":["Kevin Durant","Alperen Sengun","Amen Thompson","Jabari Smith Jr.","Fred VanVleet","Marcus Smart","Reed Sheppard","Tari Eason","Clint Capela","Steven Adams","Julian Phillips","Oscar Tshiebwe","Bruce Thornton","Isaiah Crawford","Quadir Copeland","Sean Pedulla","Bogdan Bogdanovic","Jae'Sean Tate"],"IND":["Tyrese Haliburton","Pascal Siakam","Ivica Zubac","Andrew Nembhard","Aaron Nesmith","Kelly Oubre Jr.","T.J. McConnell","Jarace Walker","Obi Toppin","Jay Huff","Jalen Slawson","Larry Nance Jr.","Braden Smith","Ben Sheppard"],"LAC":["Brandon Ingram","Darius Garland","Rui Hachimura","Max Strus","Brook Lopez","Derrick Jones Jr.","Bradley Beal","Keaton Wagler","Kris Dunn","Jordan Miller","Kobe Sanders","Baba Miller","Nick Martinelli","Isaiah Jackson"],"LAL":["Luka Doncic","Austin Reaves","Walker Kessler","Collin Sexton","Quentin Grimes","Jarred Vanderbilt","Sandro Mamukelashvili","Jake LaRavia","Ziaire Williams","Dalton Knecht","Cameron Carr","Kevon Looney","Adou Thiero","Bronny James Jr.","AK Okereke","Arthur Kaluma","Chris Manon","Matisse Thybulle"],"MEM":["Cedric Coward","Ty Jerome","Zach Edey","Cameron Boozer","Jerami Grant","Jaylen Wells","G.G. Jackson","Isaiah Stewart","Cam Spencer","Olivier-Maxence Prosper","Scotty Pippen Jr.","Javon Small","Karim Lopez","Micah Peavy","Carson Cooper","Kris Murray"],"MIA":["Giannis Antetokounmpo","Bam Adebayo","Bobby Portis Jr.","Andrew Wiggins","Tim Hardaway Jr.","Pelle Larsson","Davion Mitchell","Klay Thompson","Simone Fontecchio","Nikola Jović","Bez Mbeng","Keshad Johnson","Ryan Conwell","Tre Donaldson","Vladislav Goldin","Dru Smith","Nick Richards","Myron Gardner"],"MIL":["Tyler Herro","Ryan Rollins","Kel’el Ware","Kevin Porter Jr.","Myles Turner","Caris LeVert","Jaime Jaquez Jr.","Kyle Kuzma","Ousmane Dieng","A.J. Green","Gary Trent Jr.","Nate Ament","Pete Nance","Cormac Ryan","Bogoljub Markovic"],"MIN":["Anthony Edwards","LaMelo Ball","Jaden McDaniels","Rudy Gobert","Ayo Dosunmu","Donte DiVincenzo","Terrence Shannon Jr.","Isaiah Evans","Enrique Freeman","Rocco Zikarsky","Zyon Pullin","Jonathan Kuminga","Bones Hyland","Jaylen Clark","Trey Lyles"],"NOP":["Trey Murphy III","Zion Williamson","Dejounte Murray","Saddiq Bey","Bennedict Mathurin","Derik Queen","Herbert Jones","Jeremiah Fears","Yves Missi","Jordan Poole","Karlo Matkovic","Christian Koloko","A.J. Johnson","Kobe Bufkin","Jaron Pierre Jr.","Malik Dia"],"NYK":["Jalen Brunson","Karl-Anthony Towns","OG Anunoby","Mikal Bridges","Josh Hart","Miles McBride","Jose Alvarado","Landry Shamet","Andre Drummond","Jordan Clarkson","Kevin McCullar Jr.","Pacome Dadiet","Jaden Akins","Tyler Nickel"],"OKC":["Shai Gilgeous-Alexander","Chet Holmgren","Jalen Williams","Ajay Mitchell","Isaiah Hartenstein","Alex Caruso","Cason Wallace","Jared McCain","Jaylin Williams","Kenrich Williams","Thomas Sorber","Bennett Stirtz","Brooks Barnhizer","Otega Oweh","Josh Dix"],"ORL":["Paolo Banchero","Franz Wagner","Desmond Bane","Anthony Black","Jalen Suggs","Wendell Carter Jr.","Nikola Vucevic","Tristan da Silva","Jonathan Isaac","Colin Castleton","Malaki Branham","Izaiyah Nelson","Alex Morales","Jamal Cain","Jevon Carter"],"PHI":["Tyrese Maxey","Jaylen Brown","Joel Embiid","LeBron James","V.J. Edgecombe","Anfernee Simons","Dean Wade","Adem Bona","Kentavious Caldwell-Pope","Ariel Hukporti","Jabari Walker","Labaron Philon Jr.","Rayan Rupert"],"PHX":["Devin Booker","Dillon Brooks","Jalen Green","Miles Bridges","Collin Gillespie","Mark Williams","Jordan Goodwin","Luke Kennard","Oso Ighodaro","Pat Spencer","Haywood Highsmith","Jamaree Bouyea","Koa Peat","CJ Huntley","Koby Brea"],"POR":["Deni Avdija","Damian Lillard","Ja Morant","Donovan Clingan","Jrue Holiday","Shaedon Sharpe","Toumani Camara","Scoot Henderson","Robert Williams III","Micah Potter","Branden Carlson","Jeremy Sochan","Yang Hansen","John Tonje","Chris Youngblood","Jayson Kent","Sidy Cissoko"],"SAC":["Domantas Sabonis","Zach LaVine","Keegan Murray","Malik Monk","Maxime Raynaud","De’Andre Hunter","Precious Achiuwa","Darius Acuff Jr.","Nique Clifford","Alex Karaban","Daeqwon Plowden","Jonathan Mogbo","Emanuel Sharp","Adam Flagler","Ben Simmons"],"SAS":["Victor Wembanyama","Stephon Castle","Dylan Harper","De’Aaron Fox","Devin Vassell","Tobias Harris","Julian Champagnie","Keldon Johnson","Carter Bryant","Harrison Barnes","Luke Kornet","Jordan McLaughlin","Tarris Reed Jr.","David Jones-Garcia","Jayden Quaintance","Ja’Kobi Gillespie","Maliq Brown"],"TOR":["Kawhi Leonard","Scottie Barnes","Immanuel Quickley","R.J. Barrett","Collin Murray-Boyles","Jakob Poeltl","Jamal Shead","Ja’Kobe Walter","Allen Graves","Trayce Jackson-Davis","Alijah Martin","Malachi Smith","Jaden Bradley","Jamison Battle","Kyle Anderson"],"UTA":["Jaren Jackson Jr.","Lauri Markkanen","Keyonte George","Isaiah Collier","Ace Bailey","Brice Sensabaugh","Darryn Peterson","Kyle Filipowski","Jaxson Hayes","Jusuf Nurkic","Blake Hinson","Mohamed Bamba","Harrison Ingram","Tamar Bates","Trey Alexander","Josh Green","Josh Okogie","Sviatoslav Mykhailiuk"],"WAS":["Anthony Davis","Trae Young","Alexandre Sarr","Kyshawn George","AJ Dybantsa","Bilal Coulibaly","Deandre Ayton","Tre Johnson","Will Riley","Carlton Carrington","Justin Champagnie","Khris Middleton","Felix Okpara"]};
 const PLAYER_OVR={"ATL":{"Jalen Johnson":87,"C.J. McCollum":83,"Nickeil Alexander-Walker":83,"Dyson Daniels":81,"Onyeka Okongwu":81,"Luguentz Dort":78,"Aaron Wiggins":76,"Jock Landale":75,"Jalen Wilson":71,"Zuby Ejiofor":71,"Henri Veesaar":70,"RayJ Dennis":69,"Keshon Gilbert":68},"BOS":{"Jayson Tatum":93,"Derrick White":83,"Paul George":82,"Payton Pritchard":82,"Mitchell Robinson":80,"Neemias Queta":80,"Sam Hauser":76,"Baylor Scheierman":75,"Hugo Gonzalez":75,"Luka Garza":75,"Mike Conley":75,"Jordan Walsh":74,"Chris Cenac Jr.":71,"Ron Harper Jr.":71,"Amari Williams":69,"Dillon Mitchell":68},"BKN":{"Michael Porter Jr.":85,"Julius Randle":83,"Egor Demin":76,"Keon Ellis":76,"Noah Clowney":76,"Nolan Traore":76,"Danny Wolf":75,"Day’Ron Sharpe":75,"Terance Mann":74,"Chaney Johnson":71,"Grant Nelson":70,"Joshua Jefferson":70,"Tyler Bilodeau":69,"Mikel Brown Jr.":74,"Ben Saraf":70},"CHA":{"Brandon Miller":85,"Kon Knueppel":84,"Naz Reid":82,"Coby White":80,"Grayson Allen":80,"Moussa Diabate":79,"Ryan Kalkbrenner":79,"Dennis Schroder":76,"Royce O’Neale":76,"Grant Williams":74,"Sion James":74,"Hannes Steinbach":71,"Liam McNeeley":71,"Pat Connaughton":71,"Christian Anderson":70,"P.J. Hall":70,"Kylan Boswell":68,"Michael Ajayi":68},"CHI":{"Josh Giddey":84,"Norman Powell":84,"Matas Buzelis":81,"Nicolas Claxton":80,"Tre Jones":79,"Caleb Wilson":77,"Jalen Smith":76,"Isaac Okoro":75,"Zach Collins":75,"Patrick Williams":74,"Dailyn Swain":71,"Jordan Hawkins":71,"Jaylin Sellers":68,"Tobe Awaka":68,"Buddy Hield":74},"CLE":{"Donovan Mitchell":93,"Evan Mobley":87,"James Harden":87,"Jarrett Allen":85,"Peyton Watson":79,"Sam Merrill":77,"Jaylon Tyson":76,"Thomas Bryant":74,"Nae’Qwan Tomlin":71,"Tyrese Proctor":71,"Meleek Thomas":70,"Ernest Udeh Jr.":68,"Khalifa Diop":68,"Riley Minix":68,"Tristan Enaruna":68,"Craig Porter Jr.":70},"DAL":{"Cooper Flagg":87,"Kyrie Irving":87,"Daniel Gafford":79,"Dereck Lively II":79,"Naji Marshall":79,"P.J. Washington":79,"Santi Aldama":78,"Zaccharie Risacher":76,"Max Christie":75,"Dwight Powell":72,"Jett Howard":71,"Moussa Cisse":71,"Tarik Biberovic":71,"John Poulakidas":70,"Sergio De Larrea":69,"Tobi Lawal":69,"Marcus Sasser":74,"Caleb Martin":72},"DEN":{"Nikola Jokic":97,"Jamal Murray":89,"Aaron Gordon":83,"DeMar DeRozan":83,"Cameron Johnson":80,"Christian Braun":79,"Marvin Bagley III":76,"Julian Strawther":75,"Ryan Nembhard":72,"Alpha Diallo":71,"DaRon Holmes II":71,"Zeke Nnaji":71,"Trevon Brazile":69,"Bryce Hopkins":68,"Tyus Jones":73,"Spencer Jones":73,"Cam Whitmore":73},"DET":{"Cade Cunningham":94,"Ausar Thompson":85,"Jalen Duren":85,"Daniss Jenkins":79,"Duncan Robinson":79,"John Collins":79,"Isaiah Joe":78,"Paul Reed":77,"Javonte Green":75,"Kevin Huerter":75,"Ron Holland":75,"Ebuka Okorie":71,"Elijah Harkless":70,"Isaac Jones":70,"Ugonna Onyenso":69,"Chaz Lanier":68,"Tolu Smith":68},"GSW":{"Stephen Curry":93,"Jimmy Butler":85,"Kristaps Porzingis":81,"Brandin Podziemski":79,"Draymond Green":79,"Gui Santos":78,"Al Horford":77,"Brandon Williams":76,"De’Anthony Melton":76,"Moses Moody":76,"Gary Payton II":75,"Will Richard":74,"Charles Bassey":71,"Dalen Terry":71,"Georges Niang":71,"L.J. Cryer":71,"Malevy Leons":69,"Graham Ike":68},"HOU":{"Kevin Durant":93,"Alperen Sengun":87,"Amen Thompson":86,"Jabari Smith Jr.":80,"Fred VanVleet":79,"Marcus Smart":79,"Reed Sheppard":79,"Tari Eason":78,"Clint Capela":74,"Steven Adams":74,"Julian Phillips":71,"Oscar Tshiebwe":71,"Bruce Thornton":70,"Isaiah Crawford":68,"Quadir Copeland":68,"Sean Pedulla":68,"Bogdan Bogdanovic":73,"Jae'Sean Tate":72},"IND":{"Tyrese Haliburton":90,"Pascal Siakam":87,"Ivica Zubac":84,"Andrew Nembhard":81,"Aaron Nesmith":79,"Kelly Oubre Jr.":79,"T.J. McConnell":79,"Jarace Walker":78,"Obi Toppin":78,"Jay Huff":75,"Jalen Slawson":71,"Larry Nance Jr.":71,"Braden Smith":70,"Ben Sheppard":73},"LAC":{"Brandon Ingram":84,"Darius Garland":84,"Rui Hachimura":79,"Max Strus":78,"Brook Lopez":77,"Derrick Jones Jr.":77,"Bradley Beal":76,"Keaton Wagler":75,"Kris Dunn":75,"Jordan Miller":74,"Kobe Sanders":74,"Baba Miller":69,"Nick Martinelli":68,"Isaiah Jackson":74},"LAL":{"Luka Doncic":96,"Austin Reaves":88,"Walker Kessler":81,"Collin Sexton":79,"Quentin Grimes":78,"Jarred Vanderbilt":76,"Sandro Mamukelashvili":76,"Jake LaRavia":75,"Ziaire Williams":75,"Dalton Knecht":74,"Cameron Carr":72,"Kevon Looney":71,"Adou Thiero":70,"Bronny James Jr.":70,"AK Okereke":68,"Arthur Kaluma":68,"Chris Manon":68,"Matisse Thybulle":74},"MEM":{"Cedric Coward":80,"Ty Jerome":80,"Zach Edey":80,"Cameron Boozer":79,"Jerami Grant":79,"Jaylen Wells":78,"G.G. Jackson":77,"Isaiah Stewart":77,"Cam Spencer":76,"Olivier-Maxence Prosper":75,"Scotty Pippen Jr.":75,"Javon Small":74,"Karim Lopez":72,"Micah Peavy":71,"Carson Cooper":68,"Kris Murray":74},"MIA":{"Giannis Antetokounmpo":96,"Bam Adebayo":87,"Bobby Portis Jr.":80,"Andrew Wiggins":79,"Tim Hardaway Jr.":79,"Pelle Larsson":78,"Davion Mitchell":77,"Klay Thompson":76,"Simone Fontecchio":74,"Nikola Jović":73,"Bez Mbeng":70,"Keshad Johnson":70,"Ryan Conwell":69,"Tre Donaldson":68,"Vladislav Goldin":68,"Dru Smith":73,"Nick Richards":73,"Myron Gardner":72},"MIL":{"Tyler Herro":85,"Ryan Rollins":80,"Kel’el Ware":79,"Kevin Porter Jr.":79,"Myles Turner":79,"Caris LeVert":78,"Jaime Jaquez Jr.":78,"Kyle Kuzma":77,"Ousmane Dieng":76,"A.J. Green":74,"Gary Trent Jr.":74,"Nate Ament":72,"Pete Nance":71,"Cormac Ryan":70,"Bogoljub Markovic":69},"MIN":{"Anthony Edwards":95,"LaMelo Ball":86,"Jaden McDaniels":85,"Rudy Gobert":84,"Ayo Dosunmu":81,"Donte DiVincenzo":78,"Terrence Shannon Jr.":75,"Isaiah Evans":70,"Enrique Freeman":69,"Rocco Zikarsky":68,"Zyon Pullin":68,"Jonathan Kuminga":80,"Bones Hyland":74,"Jaylen Clark":72,"Trey Lyles":74},"NOP":{"Trey Murphy III":85,"Zion Williamson":85,"Dejounte Murray":82,"Saddiq Bey":80,"Bennedict Mathurin":79,"Derik Queen":79,"Herbert Jones":79,"Jeremiah Fears":79,"Yves Missi":75,"Jordan Poole":74,"Karlo Matkovic":74,"Christian Koloko":71,"A.J. Johnson":70,"Kobe Bufkin":70,"Jaron Pierre Jr.":68,"Malik Dia":68},"NYK":{"Jalen Brunson":96,"Karl-Anthony Towns":93,"OG Anunoby":88,"Mikal Bridges":84,"Josh Hart":82,"Miles McBride":78,"Jose Alvarado":77,"Landry Shamet":77,"Andre Drummond":76,"Jordan Clarkson":76,"Kevin McCullar Jr.":70,"Pacome Dadiet":69,"Jaden Akins":68,"Tyler Nickel":68},"OKC":{"Shai Gilgeous-Alexander":97,"Chet Holmgren":86,"Jalen Williams":85,"Ajay Mitchell":82,"Isaiah Hartenstein":82,"Alex Caruso":81,"Cason Wallace":81,"Jared McCain":78,"Jaylin Williams":77,"Kenrich Williams":76,"Thomas Sorber":71,"Bennett Stirtz":70,"Brooks Barnhizer":69,"Otega Oweh":69,"Josh Dix":68},"ORL":{"Paolo Banchero":87,"Franz Wagner":85,"Desmond Bane":84,"Anthony Black":80,"Jalen Suggs":80,"Wendell Carter Jr.":79,"Nikola Vucevic":78,"Tristan da Silva":76,"Jonathan Isaac":72,"Colin Castleton":70,"Malaki Branham":70,"Izaiyah Nelson":69,"Alex Morales":68,"Jamal Cain":72,"Jevon Carter":73},"PHI":{"Tyrese Maxey":92,"Jaylen Brown":91,"Joel Embiid":91,"LeBron James":91,"V.J. Edgecombe":83,"Anfernee Simons":79,"Dean Wade":76,"Adem Bona":75,"Kentavious Caldwell-Pope":75,"Ariel Hukporti":72,"Jabari Walker":71,"Labaron Philon Jr.":71,"Rayan Rupert":72},"PHX":{"Devin Booker":91,"Dillon Brooks":82,"Jalen Green":81,"Miles Bridges":80,"Collin Gillespie":79,"Mark Williams":78,"Jordan Goodwin":75,"Luke Kennard":75,"Oso Ighodaro":75,"Pat Spencer":75,"Haywood Highsmith":71,"Jamaree Bouyea":71,"Koa Peat":71,"CJ Huntley":68,"Koby Brea":68},"POR":{"Deni Avdija":88,"Damian Lillard":86,"Ja Morant":84,"Donovan Clingan":82,"Jrue Holiday":82,"Shaedon Sharpe":81,"Toumani Camara":80,"Scoot Henderson":79,"Robert Williams III":78,"Micah Potter":72,"Branden Carlson":71,"Jeremy Sochan":71,"Yang Hansen":70,"John Tonje":69,"Chris Youngblood":68,"Jayson Kent":68,"Sidy Cissoko":72},"SAC":{"Domantas Sabonis":85,"Zach LaVine":82,"Keegan Murray":79,"Malik Monk":79,"Maxime Raynaud":79,"De’Andre Hunter":77,"Precious Achiuwa":76,"Darius Acuff Jr.":75,"Nique Clifford":75,"Alex Karaban":71,"Daeqwon Plowden":71,"Jonathan Mogbo":71,"Emanuel Sharp":68,"Adam Flagler":67,"Ben Simmons":72},"SAS":{"Victor Wembanyama":97,"Stephon Castle":87,"Dylan Harper":85,"De’Aaron Fox":84,"Devin Vassell":81,"Tobias Harris":81,"Julian Champagnie":79,"Keldon Johnson":79,"Carter Bryant":76,"Harrison Barnes":76,"Luke Kornet":76,"Jordan McLaughlin":71,"Tarris Reed Jr.":71,"David Jones-Garcia":70,"Jayden Quaintance":70,"Ja’Kobi Gillespie":69,"Maliq Brown":69},"TOR":{"Kawhi Leonard":93,"Scottie Barnes":88,"Immanuel Quickley":82,"R.J. Barrett":82,"Collin Murray-Boyles":80,"Jakob Poeltl":79,"Jamal Shead":76,"Ja’Kobe Walter":76,"Allen Graves":71,"Trayce Jackson-Davis":71,"Alijah Martin":70,"Malachi Smith":70,"Jaden Bradley":69,"Jamison Battle":71,"Kyle Anderson":73},"UTA":{"Jaren Jackson Jr.":86,"Lauri Markkanen":86,"Keyonte George":84,"Isaiah Collier":80,"Ace Bailey":79,"Brice Sensabaugh":79,"Darryn Peterson":79,"Kyle Filipowski":78,"Jaxson Hayes":76,"Jusuf Nurkic":76,"Blake Hinson":71,"Mohamed Bamba":70,"Harrison Ingram":69,"Tamar Bates":68,"Trey Alexander":68,"Josh Green":73,"Josh Okogie":74,"Sviatoslav Mykhailiuk":73},"WAS":{"Anthony Davis":90,"Trae Young":87,"Alexandre Sarr":83,"Kyshawn George":80,"AJ Dybantsa":79,"Bilal Coulibaly":78,"Deandre Ayton":78,"Tre Johnson":78,"Will Riley":78,"Carlton Carrington":76,"Justin Champagnie":76,"Khris Middleton":76,"Felix Okpara":69}};
@@ -1552,7 +1827,7 @@ function endCheck(){if(!SZ||_ns||SZ.gi<SZ.sched.length)return;ensurePost();if(!$
  if(P&&P.champ){if(!P.mvp){P.mvp=finalsMVP();saveSZ()}if(!SZ.cm){SZ.cm={done:false};saveSZ()}if(!SZ.cm.done&&!$('#champm')){const o=$('#endm');if(o)o.remove();showChamp()}return}
  let e=SZ.end;if(!e){const s=userStatus();if(s.k==='alive'){const qi=qualInfo();if(qi&&!$('#endm'))showInfo(qi);return}e=SZ.end={...s,done:false};saveSZ()}if(!e.done&&!$('#endm'))showEnd(e)}
 function showEnd(e){const m=document.createElement('div');m.id='endm';m.className='gmodal open';m.style.zIndex=20000;m.setAttribute('role','dialog');m.setAttribute('aria-modal','true');m.setAttribute('aria-labelledby','endh');
- m.innerHTML=`<div class="gm-card endc"><div><h2 id="endh">${e.title||'Your season is over'}</h2><p>${e.msg}</p>${e.det?`<p class="dim">${e.det}</p>`:''}</div><div class="bar" style="justify-content:center"><button id="endw" type="button">Watch Play-In/Playoffs</button><button id="endn" type="button">${PM()?'New Playoffs':'Start New Season'}</button><button id="endx" type="button">Close</button></div></div>`;
+ m.innerHTML=`<div class="gm-card endc"><div><h2 id="endh">${e.title||'Your season is over'}</h2><p>${e.msg}</p>${e.det?`<p class="dim">${e.det}</p>`:''}</div><div class="bar" style="justify-content:center"><button id="endw" type="button">Watch Play-In/Playoffs</button><button id="endn" type="button">${PM()?'New Playoffs':'Start New Season'}</button><button id="endx" class="modal-x" type="button" aria-label="Close">X</button></div></div>`;
  m.onkeydown=ev=>{if(ev.key==='Escape')closeEnd()};document.body.appendChild(m);$('#endx').onclick=closeEnd;$('#endn').onclick=startNewSeason;$('#endw').onclick=watchStart;$('#endw').focus()}
 function qualInfo(){if(!SZ||SZ.gi<SZ.sched.length)return null;const me=SZ.me,cf=TEAM_NAMES.find(t=>t[0]===me)[2],c=cf[0],qm=SZ.qm||(SZ.qm={}),k=confList(cf),r=k.indexOf(me),P=SZ.po,I=SZ.pi,det=`${cf}ern Conference`,
  po=(seed,opp)=>({key:'po',title:'PLAYOFF BOUND!',msg:opp?`You're the ${ordn(seed)} seed.<br>Your opponent: ${tnm(opp)}.<br>Chase the championship!`:`You're the ${ordn(seed)} seed. Your first-round opponent will be decided by the Play-In Tournament.`,det});
@@ -1590,8 +1865,8 @@ function finalsMVP(){const P=SZ.po;if(!P||!P.champ)return null;const ch=P.champ.
  const m=l[0];return{n:m.n,t:m.t,gp:m.gp,ppg:+(m.pts/m.gp).toFixed(1),rpg:+(m.rb/m.gp).toFixed(1),apg:+(m.as/m.gp).toFixed(1),games:gl.length}}
 function showChamp(){const P=SZ.po,c=P.champ.c,F=P.S.F[0],cw=F.a.c===c?F.wa:F.wb,lw=F.a.c===c?F.wb:F.wa,opp=F.a.c===c?F.b.c:F.a.c,mv=P.mvp,s=userStatus(),mine=c===SZ.me;
  const m=document.createElement('div');m.id='champm';m.className='gmodal open';m.style.zIndex=20001;m.setAttribute('role','dialog');m.setAttribute('aria-modal','true');m.setAttribute('aria-labelledby','champh');
- m.innerHTML=`<div class="gm-card endc"><div><img class="endt" alt="Larry O'Brien Trophy" src="${TROPHY_IMG}" onerror="this.onerror=null;this.src=TROPHY_SVG"><h2 id="champh">${tnm(c)} are the NBA Champions!</h2><p id="champs">${tnm(c)} defeated ${tnm(opp)} ${cw}-${lw} in the NBA Finals.</p><p id="champmvp"><b>Finals MVP: ${mv?mv.n:''}</b>${mv?`<br>${mv.ppg} PPG, ${mv.rpg} RPG, ${mv.apg} APG over ${mv.gp} Finals game${mv.gp===1?'':'s'}`:'unavailable'}</p><p class="dim">${mine?'Congratulations \u2013 your team won the title!':(s.k==='out'?s.msg:'')}</p></div><div class="bar" style="justify-content:center"><button id="champx" type="button">Close</button><button id="champn" type="button">${PM()?'New Playoffs':'Start New Season'}</button></div></div>`;
- m.onkeydown=ev=>{if(ev.key==='Escape')closeChamp()};document.body.appendChild(m);$('#champx').onclick=closeChamp;$('#champn').onclick=startNewSeason;$('#champx').focus()}
+ m.innerHTML=`<div class="gm-card endc"><button id="champx" class="modal-x" type="button" aria-label="Close">X</button><div><img class="endt" alt="Larry O'Brien Trophy" src="${TROPHY_IMG}" onerror="this.onerror=null;this.src=TROPHY_SVG"><h2 id="champh">${tnm(c)} are the NBA Champions!</h2><p id="champs">${tnm(c)} defeated ${tnm(opp)} ${cw}-${lw} in the NBA Finals.</p><p id="champmvp"><b>Finals MVP: ${mv?mv.n:''}</b>${mv?`<br>${mv.ppg} PPG, ${mv.rpg} RPG, ${mv.apg} APG over ${mv.gp} Finals game${mv.gp===1?'':'s'}`:'unavailable'}</p><p class="dim">${mine?'Congratulations \u2013 your team won the title!':(s.k==='out'?s.msg:'')}</p></div></div>`;
+ m.onkeydown=ev=>{if(ev.key==='Escape')closeChamp()};document.body.appendChild(m);$('#champx').onclick=closeChamp;$('#champx').focus()}
 function closeChamp(){if(SZ){(SZ.cm=SZ.cm||{}).done=true;saveSZ()}const m=$('#champm');if(m)m.remove()}
 function watchStart(){if(!SZ||SZ.gi<SZ.sched.length)return;ensurePost();if(SZ.po&&SZ.po.champ)return;if(userStatus().k==='alive')return;
  SZ.watch='run';if(SZ.end)SZ.end.done=true;saveSZ();const e=$('#endm');if(e)e.remove();gv='playoffs';XS.gd=null;nav('games');watchLoop()}
@@ -1717,7 +1992,8 @@ function drawPrev(tm){if(!TL||$('#playm').classList.contains('hide'))return;cons
 function screenerFollow(t,sq,allowSlip){const P=pl(t,sq.s),D=T[1-t],shoot=cl((P.s3-66)/22,0,1),fin=cl((P.attr.finish-62)/26,0,1)+(P.pos==='C'?.12:0)+(P.attr.vertical>=78?.06:0),dd=A[1-t][G.dm.indexOf(sq.s)],rimProt=dd?Math.abs(dd.x-hoop(t).x)<14:false;
  const pop=shoot*.95-fin*.42+.08+(T[t].style==='four'&&G.as&&G.as[sq.s]!==4?(/PF|^C|CENTER|FORWARD-CENTER/i.test(String(P.pos||''))?.4:2):0)+(D.cov==='drop'?.14:0)+(rimProt?.1:0)-(D.cov==='switch'?.1:0);
  if(allowSlip&&D.cov==='switch'&&R()<.3*cl(P.attr.finish/80,0,1))return'slip';
- return R()<cl(pop,.03,.9)?'pop':'roll'}
+ if(P.s3<70)return'roll';/* PICK AND ROLL: a screener with a 70+ three-point rating chooses between rolling to the rim and fading/popping to the arc; everyone else always rolls */
+ {const fadeP=cl(.5+(D.cov==='drop'?.12:0)+(D.cov==='switch'?-.1:0)+(rimProt?.08:0)+(P.s3-70)*.012-fin*.15,.25,.85);return R()<fadeP?'pop':'roll'}}
 function popSpot(t,sc){const H=hoop(t),dir=dirOf(t),F=A[t][sc.f],side=F.y<25?1:-1,P=pl(t,sc.s),u=23.5;
  const c=[[u,side*11],[u,side*18],[u+1,side*4],[u,-side*11]].map(([x,y])=>({x:H.x-dir*x,y:25+y}));let best=c[0],bs=-1;
  c.forEach(p=>{const m=Math.min(...A[t].filter(b=>b.s!==sc.s).map(b=>hyp(b.x-p.x,b.y-p.y)),...A[1-t].map(d=>hyp(d.x-p.x,d.y-p.y)+2));if(m>bs){bs=m;best=p}});return best}
@@ -1757,7 +2033,7 @@ function screenContact(sc){
  sc.res=res;SC[res]=(SC[res]||0)+1;
  if(res==='switch')[G.dm[dh],G.dm[ds]]=[G.dm[ds],G.dm[dh]];else if(res==='under')dd.under=1.4;else if(res==='over'||res==='trail')dd.slow=res==='over'?.8:1}
 var SC={};
-function applyDefaultPlan(t){Object.assign(t,{style:'four',tempo:cl(Math.round(((t.ts&&t.ts.pace)||1)*3),2,5),shotprofile:teamShotProfile(t.ts),def:'man',gam:50,cov:'drop',emph:'star',rebstrat:'back1',gameplan:'balanced',auto:false,drive:true})}
+function applyDefaultPlan(t){Object.assign(t,{style:'four',tempo:cl(Math.round(((t.ts&&t.ts.pace)||1)*3),2,5),shotprofile:teamShotProfile(t.ts),def:'man',gam:50,cov:'drop',emph:'star',rebstrat:'back1',gameplan:'balanced',auto:false,pnr:true})}
 /* User coaching defaults (saved in the season save, like the default lineup): applied on top of the built-in defaults at the start of every game. */
 const COACH_KEYS=['style','tempo','shotprofile','def','cov','gam','emph','rebstrat','gameplan','auto','drive'];
 function applyCoachDefaults(t){const d=SZ&&SZ.coachDef;if(!d||typeof d!=='object')return;COACH_KEYS.forEach(k=>{if(d[k]!==undefined&&d[k]!==null)t[k]=d[k]})}
@@ -1780,7 +2056,7 @@ function init(){
  msg(SZ.gi>=SZ.sched.length?(SZ.pg?'<b class="msg1">'+postTitle()+'</b><br><span class="msg1">'+(g.home?'vs':'at')+' '+T[1].name+'.</span><br><br><button onclick="startTip()">Start</button>':'Postseason: no game for your team right now. Manage it from the Games tab.'):`<span class="msg1">${SZ.quick?(g.home?T[1].name+' vs '+T[0].name:T[0].name+' vs '+T[1].name):'Game '+(SZ.gi+1)+' of '+SZ.sched.length+': '+(g.home?'vs':'at')+' '+T[1].name}</span><br><br><button onclick="startTip()">Start</button>`);$('#start').classList.add('hide');ui()}
 function ssSync(){const sel=$('#selMe');if(!sel||!sel.value)return;const c=sel.value,n=quickNameParts(c),col=quickColor(c),im=$('#ssImg');im.style.visibility='';im.onerror=()=>{im.style.visibility='hidden'};im.src=`https://cdn.nba.com/logos/nba/${TEAM_IDS[c]}/global/L/logo.svg`;$('#ssCity').textContent=n.city;const k=$('#ssNick');k.textContent=n.nick;k.style.color=col;k.style.textShadow=`0 0 22px ${col}66`}
 function showStart(){ssSync();const c=$('#goCont'),s=loadSZ();c.style.display=s?'':'none';$('#contInfo').textContent=s?`Season in progress: ${TEAM_NAMES.find(t=>t[0]===s.me)[1]}, ${s.gi>=s.sched.length?'postseason':'game '+(s.gi+1)+' of '+s.sched.length}, ${s.league[s.me].w}-${s.league[s.me].l}`:'';$('#start').classList.remove('hide')}
-function inputs(){const t=T[0];$('#tempo').value=t.tempo;$('#style').value=t.style;$('#def').value=t.def;$('#cov').value=t.cov;$('#gam').value=t.gam;$('#auto').checked=t.auto;$('#shotprofile').value=t.shotprofile||'balanced';$('#gameplan').value=t.gameplan||'balanced';$('#rebstrat').value=t.rebstrat||'auto';$('#emph').value=t.emph||'star';{const dv=$('#drvOn');if(dv)dv.checked=t.drive!==false}const hb=$('#hackBtn');if(hb){hb.textContent='Intentional foul: '+(t.hack?'ON':'Off');hb.classList.toggle('on',!!t.hack);hb.setAttribute('aria-pressed',!!t.hack)}}
+function inputs(){const t=T[0];$('#tempo').value=t.tempo;$('#style').value=t.style;$('#def').value=t.def;$('#cov').value=t.cov;$('#gam').value=t.gam;$('#auto').checked=t.auto;$('#f3').checked=!!t.f3;$('#shotprofile').value=t.shotprofile||'balanced';$('#gameplan').value=t.gameplan||'balanced';$('#rebstrat').value=t.rebstrat||'auto';$('#emph').value=t.emph||'star';{const dv=$('#drvOn');if(dv)dv.checked=t.pnr!==false}const hb=$('#hackBtn');if(hb){hb.textContent='Intentional foul: '+(t.hack?'ON':'Off');hb.classList.toggle('on',!!t.hack);hb.setAttribute('aria-pressed',!!t.hack)}}
 
 /* Select a primary ball-handler for every inbound: prefer the starting point guard, but allow an elite ball-handler to take it when his handle/decision profile is clearly superior. */
 const POOR_HANDLE=64;   /* ball handling below this: never brings the ball up the floor except on a real break */
@@ -1954,6 +2230,39 @@ function scanOpen(a){const t=a.t;return A[t].filter(b=>b.s!==a.s&&passOK(a,b.s))
    const dist=hyp(b.x-a.x,b.y-a.y),nearest=Math.min(...A[1-t].map(d=>hyp(d.x-b.x,d.y-b.y))),op=openF(t,b.x,b.y),risk=laneRisk(t,a.x,a.y,b.x,b.y),ev=evShot(t,b.s,b.x,b.y),corner=inCornerZone(t,b.x,b.y);
    return{b,dist,nearest,op,risk,ev,corner,score:op*3.2+Math.max(0,nearest-3.5)*.24+Math.min(2.5,b.openFor||0)*.9+ev.v*.42+(corner?.4*cornerW(t,b.s):0)-risk*2.8-Math.max(0,dist-13)*.035-Math.max(0,dist-22)*.1};   // 22+ ft (e.g. corner to the top of the arc) is a long, slow pass through a crowded floor: strongly discouraged
   }).filter(x=>!bcx(t,x.b)&&x.dist>=2.0&&x.dist<=33&&x.nearest>=Math.max(2.8,NEAR_MIN[openKind(t,x.b.x,x.b.y)]-.9)&&x.op>=.36&&x.risk<.62&&!(x.b.s===G.lastPassFrom&&G.passes>0&&x.op<.66)&&pairLoop(a.s,x.b.s)<4).sort((x,y)=>y.score-x.score)}
+/* ===== FORCE 3 (late-game option) =====
+   While T[t].f3 is on the team never takes a two. It moves the ball until a three is open (nearest defender far enough away),
+   steps back behind the arc if the ball handler is inside it once the clock gets short, and with 2 seconds left on the shot clock
+   takes the three even when it is covered. The last 1.1 sec of the clock / game is never held, so it can never cause a violation. */
+const F3_OPEN=.4;
+const f3On=t=>!!(T[t]&&T[t].f3)&&G.ph==='live';
+function f3StepBack(a){   // walk straight back from the hoop to just behind the three-point line
+ const t=a.t,Ht=hoop(t),d=hyp(a.x-Ht.x,a.y-Ht.y)||1,r=24.8,nx=Ht.x+(a.x-Ht.x)/d*r,ny=cl(Ht.y+(a.y-Ht.y)/d*r,2,48);
+ if(Math.abs(nx-Ht.x)>47.5)return false;
+ a.mode='';a.cstep={x:nx,y:ny,t:1.5};a.dec=.5;return true}
+function f3KickOut(a){    // pass to the teammate with the best OPEN three
+ const t=a.t,opts=A[t].filter(b=>b.s!==a.s&&!bcx(t,b)&&passOK(a,b.s)).map(b=>({b,ev:evShot(t,b.s,b.x,b.y),op:openF(t,b.x,b.y),risk:laneRisk(t,a.x,a.y,b.x,b.y)})).filter(x=>x.ev.ty==='three'&&x.op>=F3_OPEN+.05&&x.risk<.4).sort((x,y)=>y.ev.v-x.ev.v);
+ return opts.length&&pass(a,opts[0].b.s,true)}
+/* Called at the top of shoot(): returns true when the shot must NOT be taken right now. */
+function f3Gate(a){
+ const t=a.t;if(!f3On(t))return false;
+ const c=G.c24;if(c<=1.1||clock<=1.5)return false;
+ const ty=shotType(t,a.x,a.y)[0];
+ if(ty==='three'&&(c<=2||openF(t,a.x,a.y)>=F3_OPEN))return false;   // open three, or the 2-second covered three
+ if(ty!=='three'&&c<=3.4&&f3StepBack(a))return true;               // inside the arc and time is short: get behind it
+ if(f3KickOut(a))return true;
+ a.dec=.3;return true}
+/* Called inside decide() just before the best option is chosen: trims the options. Returns true if it already acted. */
+function f3Decide(t,a,me,myOp,c,heave,cand){
+ if(!f3On(t)||heave||c<=1.1||clock<=1.5)return false;
+ if(me.ty!=='three'&&c<=3.4&&c>1.1&&f3StepBack(a))return true;
+ for(let i=cand.length-1;i>=0;i--){const x=cand[i];
+  if(x.k==='drive'){cand.splice(i,1);continue}
+  if(x.k==='shoot'&&!x.forcedHeave){
+   if(me.ty!=='three')cand.splice(i,1);                       // never a two
+   else if(c<=2)x.v+=6;                                        // 2 seconds left: put the three up, open or not
+   else if(myOp<F3_OPEN)cand.splice(i,1)}}                      // covered three with time left: keep moving the ball
+ return false}
 function decide(a,opt){
  opt=opt||{};const t=a.t,s=a.s,O=T[t],S=O.style,Ht=hoop(t),du=hyp(a.x-Ht.x,a.y-Ht.y),P=pl(t,s),c=G.c24,dbl=G.dbl>=0||!!opt.trap;
  const periodEnd=clock<=7.5,gameEnd=q>=4&&clock<=8.5&&Math.abs(T[0].sc-T[1].sc)>0,backcourt=Math.abs(a.x-Ht.x)>47,heave=periodEnd&&backcourt&&!gameEnd,urg=cl((20-c)/16,0,1)+(O.tempo-3)*.05,minT=[22,20,17,14,11][O.tempo-1],thr=(opt.bc?.7:1.05-.5*urg-(G.putback?.3:0)-(opt.iso?.08:0)+(cpuT(t)?AIX().thr:0)),canShoot=!opt.bc&&!opt.trap&&(G.putback||G.fcT>=minT||c<4||opt.iso||opt.pull);
@@ -2016,7 +2325,7 @@ function decide(a,opt){
  // Fast break: look only for the layup/dunk; pass only when a defender is near the rim and ahead of the ball handler.
  {const trn=!heave&&!opt.trap&&a.mode!=='drive'&&fbTrans(a);if(trn&&!rimProt(t,a)){const Hq=hoop(t),dq=hyp(a.x-Hq.x,a.y-Hq.y);if(dq>6){a.mode='drive';a.mt=cl(dq/10,1.2,3.4);a.dy=cl((25-a.y)*.3,-3,3);a.dec=.2;log(`${P.n} attacks the rim on the break`);return}for(let i=cand.length-1;i>=0;i--)if(cand[i].k==='pass')cand.splice(i,1)}if(trn){for(let i=cand.length-1;i>=0;i--)if(cand[i].k==='shoot'&&!cand[i].forcedHeave&&me.ty==='three')cand.splice(i,1)}}
  // Corner-three preference: prioritize a reasonably open catch-and-shoot corner look before choosing the best action.
- if(me.ty==='three'&&inCornerZone(t,a.x,a.y)&&myOp>=.38&&canShoot&&!heave&&!dbl){const shot=cand.find(x=>x.k==='shoot');if(shot)shot.v+=(.2+myOp*.2)*cornerW(t,s)} cand.sort((x,y)=>y.v-x.v);const b=cand[0],sh=cand.find(x=>x.k==='shoot');if($('#debugMode')?.checked)passDebug(`<b>${P.n}</b> thr ${thr.toFixed(2)} → `+cand.slice(0,5).map(x=>`${x.k}${x.b!=null?' '+pl(t,x.b).n:''} ${x.v.toFixed(2)}`).join(' | ')+` · shot clock ${Math.ceil(c)}`);if(heave&&b&&b.k==='shoot'){log(`${P.n} launches a late-quarter shot before time expires`);return shoot(a)}if(!b){a.dec=.4;return}
+ if(me.ty==='three'&&inCornerZone(t,a.x,a.y)&&myOp>=.38&&canShoot&&!heave&&!dbl){const shot=cand.find(x=>x.k==='shoot');if(shot)shot.v+=(.2+myOp*.2)*cornerW(t,s)} if(f3Decide(t,a,me,myOp,c,heave,cand))return;cand.sort((x,y)=>y.v-x.v);const b=cand[0],sh=cand.find(x=>x.k==='shoot');if($('#debugMode')?.checked)passDebug(`<b>${P.n}</b> thr ${thr.toFixed(2)} → `+cand.slice(0,5).map(x=>`${x.k}${x.b!=null?' '+pl(t,x.b).n:''} ${x.v.toFixed(2)}`).join(' | ')+` · shot clock ${Math.ceil(c)}`);if(heave&&b&&b.k==='shoot'){log(`${P.n} launches a late-quarter shot before time expires`);return shoot(a)}if(!b){a.dec=.4;return}
  // Open lane: nobody between the ballhandler and the rim -> attack for a layup/dunk instead of a pull-up.
  {const Hh=hoop(t),du2=hyp(a.x-Hh.x,a.y-Hh.y);const fbNow=G.fb||G.fbGo,threeOK=me.ty!=='three'||fbNow||(P.attr.finish>=75&&P.s3<82);if(du2>8&&du2<(fbNow?45:26)&&a.mode!=='drive'&&!heave&&c>2.2&&threeOK){const open_=!A[1-t].some(d=>{const f=cl(((d.x-a.x)*(Hh.x-a.x)+(d.y-a.y)*(Hh.y-a.y))/(du2*du2),0,1);return hyp(d.x-(a.x+f*(Hh.x-a.x)),d.y-(a.y+f*(Hh.y-a.y)))<3.6&&hyp(d.x-Hh.x,d.y-Hh.y)<du2+1});
   if(open_&&R()<(me.ty==='three'?(fbNow?.8:.5):.92)){a.mode='drive';a.mt=cl(du2/10,1.2,3);a.dy=cl((25-a.y)*.3,-3,3);a.dec=.2;log(`${P.n} sees an open lane — attacks the rim`);return}}}
@@ -2026,15 +2335,11 @@ function decide(a,opt){
   if(!heave&&!opt.trap&&!dbl&&rimD<=12.5&&rimD>2.2&&laneClear&&fdDist>3.7&&!lastChance){G.why='open drive lane: prioritize the easy two';if($('#debugMode')?.checked)passDebug(`<b>${P.n}</b> open drive lane: finish at the rim before considering a kick-out`);return shoot(a)}
  }
  // 4-Out-1-In priority on every catch: shoot if open -> drive -> pass. fourDrive = a drive is on (the open-shot rules below still run first).
- const fourDrive=(()=>{if(S!=='four'||O.drive===false||!P.sl||!P.sl.drive||heave||opt.bc||opt.trap||dbl||a.mode==='drive'||c<=2.5||G.ph!=='live'||G.fb||G.fbGo||G.fcT<.8||du<8||du>32)return false;
-  if(G.as&&G.as[s]===4)return false;
+ const fourDrive=(()=>{if(S!=='four'||O.pnr===false||heave||opt.bc||opt.trap||dbl||a.mode==='drive'||a.mode==='iso'||c<=2.5||G.ph!=='live'||G.fb||G.fbGo||G.fcT<.8||du<8||du>40||G.c24<5.5)return false;
+  if(G.as&&G.as[s]===4)return false;   // the 1-in player is the screener, he never calls it for himself
+  if(G.scrs.some(x=>x.f===s||x.s===s))return false;
   if(inCornerZone(t,a.x,a.y))return false;
-  if(A[1-t].some(d=>{const z=cl(((d.x-a.x)*(Ht.x-a.x)+(d.y-a.y)*(Ht.y-a.y))/Math.max(1,du*du),0,1);return hyp(d.x-(a.x+z*(Ht.x-a.x)),d.y-(a.y+z*(Ht.y-a.y)))<3.1&&hyp(d.x-Ht.x,d.y-Ht.y)<du+1}))return false;
-  const[nd,nm]=nearD(t,a.x,a.y),dp=pl(1-t,nd.s);
-  if(hyp(nd.x-Ht.x,nd.y-Ht.y)<du-.5&&nm<2.0&&Math.abs(((nd.y-a.y)*(Ht.x-a.x)-(nd.x-a.x)*(Ht.y-a.y))/du)<1.3)return false;   // on-ball defender is sitting in the lane
-  const helpers=A[1-t].filter(d=>d!==nd&&hyp(d.x-Ht.x,d.y-Ht.y)<du-1&&hyp(d.x-(a.x+Ht.x)/2,d.y-(a.y+Ht.y)/2)<5.5).length;
-  if(helpers>=2)return false;
-  return R()<cl(.55+(P.spd-dp.spd)*.012+((P.attr.handle||60)-70)*.004-helpers*.2,.25,.85)})();
+  return !G.scrs.length&&!G.play;})();
  // String passes: if the most open shooter is a long or tightly-covered direct pass, relay through a safe nearby teammate who can pass on quickly.
  {const tg=A[t].filter(b=>b.s!==a.s&&!bcx(t,b)).map(b=>({b,e:evShot(t,b.s,b.x,b.y),fo:projectedOpen(t,b,a),d:hyp(b.x-a.x,b.y-a.y),risk:laneRisk(t,a.x,a.y,b.x,b.y)})).filter(x=>x.e.v>=1&&x.fo>=.6).sort((x,y)=>(y.e.v+y.fo*.5)-(x.e.v+x.fo*.5))[0];
   if(!fourDrive&&tg&&tg.e.v>=me.v+.25&&(tg.d>18||tg.risk>.2)&&c>2.5&&G.passes<8&&!heave){
@@ -2045,7 +2350,9 @@ function decide(a,opt){
  // Open-shot window: if no defender can get a hand up within 0.25s, a decent shot is taken.
  {const ct=contestTime(t,a),cornerThree=me.ty==='three'&&inCornerZone(t,a.x,a.y),cornerOpen=cornerThree&&myOp>=.48&&P.s3>=58&&cornerGov(t)>.4;const shotFloor=me.ty==='three'?(cornerOpen?.95:1.02):.85;const earlyOpen=!opt.bc&&!opt.trap&&Math.abs(a.x-Ht.x)<47&&G.fcT>=EARLY_FC_T;   // an open look does not wait for the clock or for teammates
   if(ct>=(me.ty==='three'&&!cornerThree?.45:.25)&&!(me.ty==='three'&&!cornerThree&&myOp<.6)&&(canShoot||earlyOpen)&&me.v>=shotFloor&&(earlyOpen||G.fcT>=Math.max(3.5,8.5-(O.tempo-3)))&&!heave&&!dbl&&!((G.fb||G.fbGo)&&me.ty==='three')&&!cand.some(x=>x.k==='pass'&&x.ev>=me.v+.25&&c>1.8)){G.why=cornerOpen?`open corner three: nearest defender ${ct.toFixed(2)}s away`:`open shot: nearest defender ${ct.toFixed(2)}s away`;if($('#debugMode')?.checked)passDebug(`<b>${P.n}</b> ${G.why}`);return shoot(a)}}
- if(fourDrive){a.mode='drive';a.mt=cl(du/10,1.4,3.2);a.dy=cl((25-a.y)*.3,-3,3);a.dec=.2;G.drv4=(G.drv4||0)+1;log(`${P.n} puts it on the floor and drives (4-out: no open shot)`);return}
+ if(fourDrive){/* PICK AND ROLL: no open shot, so the handler calls for a ball screen (all teams). makeScreen(...,true) forces the ball-screen branch; the screener then rolls, or fades if he has a 70+ three. */
+  makeScreen(t,a,true);
+  if(G.scrs.some(x=>x.type==='ball'&&x.f===s)){a.dec=.15;G.scrT=1.6;G.pnr4=(G.pnr4||0)+1;if($('#debugMode')?.checked)passDebug(`<b>${P.n}</b> no open shot: calls pick and roll`);return}}
  // Open-man priority: a materially better, safe pass beats a poor own shot even below the shot threshold or when the clock forces a shot.
  {const bp=cand.find(x=>x.k==='pass'),dr=cand.find(x=>x.k==='drive');
   if(bp&&!heave&&!opt.trap&&c>1.8&&bp.v>=Math.max(.9,me.v+.12)&&bp.ev>=me.v+.1&&(me.v<1.25||bp.ev>=me.v+.3)&&(!dr||bp.v>=dr.v+.05)&&!(b.k==='shoot'&&me.dist<=6&&me.v>=bp.v)){G.why=`pass ${pl(t,bp.b).n} ${bp.v.toFixed(2)} > own shot ${me.v.toFixed(2)}`;if($('#debugMode')?.checked)passDebug(`<b>${P.n}</b> open-man pass: ${G.why}`);return pass(a,bp.b)}}
@@ -2110,7 +2417,7 @@ function pass(a,rs,safe){
   if(!anotherPassCut&&remaining>5){a.mode='cut';a.mt=0;a.cut={t:1.15,x:Hc.x-dc*2.6,y:cl(25+(25-a.y)*.12,21,29),passCut:true};a.dec=.12;}
  }
  return true}
-function shoot(a){if(a.mode==='post')a.mode='';
+function shoot(a){if(f3Gate(a))return;if(a.mode==='post')a.mode='';
  // Fast break: no pull-up threes from the top of the key; attack the rim (or take the wing/corner three) instead.
  if((G.fb||G.fbGo)&&a.mode!=='drive'&&G.c24>3&&clock>8&&hyp(a.x-hoop(a.t).x,a.y-hoop(a.t).y)>9){const e_=evShot(a.t,a.s,a.x,a.y);if(e_.ty==='three'&&Math.abs(a.y-25)<11&&R()<.85){a.mode='drive';a.mt=2.2;a.dy=cl((25-a.y)*.3,-3,3);a.dec=.2;return}}
  const t=a.t,s=a.s,P=pl(t,s),[ty,dist]=shotType(t,a.x,a.y),op=openF(t,a.x,a.y),[nd,md]=nearD(t,a.x,a.y),p=shotPFx(t,s,ty,op,nd,dist,a.x,a.y),dp=pl(1-t,nd.s),Ht=hoop(t);
@@ -3069,7 +3376,7 @@ function reconMins(t,views,idx){return idx.map(i=>{const raw=views.map(v=>v.pl[i
 function setTab(h){const e=$('#tab');if(e&&e._h!==h){e.innerHTML=h;e._h=h}}
 function changeFullBoxPeriod(d){fbPeriod=perStep(perKeys(),fbPeriod,d);refreshBox()}
 function refreshBox(){if(typeof T!=='undefined'&&T&&!$('#fbm').classList.contains('hide'))setTab(box(fbT));const m=$('#gmodal');if(m&&m.classList.contains('open')&&_gb)renderGameBody()}
-let fbT=0,fbPeriod='total';function box(ti){return T.filter((t,i)=>i===ti).map(t=>{if(fbPeriod!=='total'&&fbPeriod>q)fbPeriod='total';let src=t;if(fbPeriod!=='total'){src=quarterTeamView(t,ti,fbPeriod);const mm=reconMins(t,perKeys().slice(1).map(n=>quarterTeamView(t,ti,n)),t.pl.map((p,i)=>i));src={...src,pl:src.pl.map((p,i)=>({...p,min:mm[i][fbPeriod-1]}))}}const dr=p=>p.drb||Math.max(0,(p.rb||0)-(p.orb||0)),cols=[['n','Player',p=>p.n],['min','Min',p=>p.min],['pts','Pts',p=>p.pts],['reb','Reb',p=>p.rb],['oreb','OReb',p=>p.orb||0],['dreb','DReb',dr],['ast','Ast',p=>p.as],['stl','Stl',p=>p.stl],['blk','Blk',p=>p.blk],['to','TO',p=>p.to],['pf','PF',p=>p.pf],['fg','FG',p=>p.fg+p.fa/1000],['tp','3P',p=>p.tm+p.ta/1000],['ft','FT',p=>(p.ftm||0)+(p.fta||0)/1000]];return `<div class="fb-period"><button type="button" aria-label="Previous period" onclick="changeFullBoxPeriod(-1)">&lt;</button><strong>${perLabel(fbPeriod)}</strong><button type="button" aria-label="Next period" onclick="changeFullBoxPeriod(1)">&gt;</button></div><table><caption>${t.name} ${src.sc}</caption><tr>${cols.map(c=>bxTh(c[0],c[1])).join('')}</tr>`+bxSorted(src.pl,cols).map(p=>`<tr><td>${p.n}</td><td>${Math.round(p.min)}</td><td>${p.pts}</td><td>${p.rb}</td><td>${p.orb||0}</td><td>${dr(p)}</td><td>${p.as}</td><td>${p.stl}</td><td>${p.blk}</td><td>${p.to}</td><td>${p.pf}</td><td>${p.fg}-${p.fa}</td><td>${p.tm}-${p.ta}</td><td>${p.ftm||0}-${p.fta||0}</td></tr>`).join('')+'</table>'}).join('')}
+let fbT=0,fbPeriod='total';function box(ti){return T.filter((t,i)=>i===ti).map(t=>{if(fbPeriod!=='total'&&fbPeriod>q)fbPeriod='total';let src=t;if(fbPeriod!=='total'){src=quarterTeamView(t,ti,fbPeriod);const mm=reconMins(t,perKeys().slice(1).map(n=>quarterTeamView(t,ti,n)),t.pl.map((p,i)=>i));src={...src,pl:src.pl.map((p,i)=>({...p,min:mm[i][fbPeriod-1]}))}}const dr=p=>p.drb||Math.max(0,(p.rb||0)-(p.orb||0)),cols=[['n','Player',p=>p.n],['min','Min',p=>p.min],['pts','Pts',p=>p.pts],['reb','Reb',p=>p.rb],['oreb','OReb',p=>p.orb||0],['dreb','DReb',dr],['ast','Ast',p=>p.as],['stl','Stl',p=>p.stl],['blk','Blk',p=>p.blk],['to','TO',p=>p.to],['pf','PF',p=>p.pf],['fg','FG',p=>p.fg+p.fa/1000],['tp','3P',p=>p.tm+p.ta/1000],['ft','FT',p=>(p.ftm||0)+(p.fta||0)/1000]];return `<div class="fb-period"><button type="button" aria-label="Previous period" onclick="changeFullBoxPeriod(-1)">&lt;</button><strong>${perLabel(fbPeriod)}</strong><button type="button" aria-label="Next period" onclick="changeFullBoxPeriod(1)">&gt;</button></div><table><caption>${t.name}</caption><tr>${cols.map(c=>bxTh(c[0],c[1])).join('')}</tr>`+bxSorted(src.pl,cols).map(p=>`<tr><td>${p.n}</td><td>${Math.round(p.min)}</td><td>${p.pts}</td><td>${p.rb}</td><td>${p.orb||0}</td><td>${dr(p)}</td><td>${p.as}</td><td>${p.stl}</td><td>${p.blk}</td><td>${p.to}</td><td>${p.pf}</td><td>${p.fg}-${p.fa}</td><td>${p.tm}-${p.ta}</td><td>${p.ftm||0}-${p.fta||0}</td></tr>`).join('')+'</table>'}).join('')}
 function teamTotals(t){const sum=k=>t.pl.reduce((a,p)=>a+(p[k]||0),0),fg=sum('fg'),fa=sum('fa'),tm=sum('tm'),ta=sum('ta'),ftm=sum('ftm'),fta=sum('fta'),orb=sum('orb'),rb=sum('rb'),bench=t.pl.reduce((a,p,i)=>a+((t.starters&&t.starters.has(i))?0:p.pts),0),pc=(m,a)=>a?` (${Math.round(100*m/a)}%)`:'';return{pts:t.sc,fg:`${fg}/${fa}${pc(fg,fa)}`,tp:`${tm}/${ta}${pc(tm,ta)}`,ft:`${ftm}/${fta}${pc(ftm,fta)}`,oreb:orb,dreb:Math.max(0,rb-orb),ast:sum('as'),stl:sum('stl'),blk:sum('blk'),to:sum('to'),pf:sum('pf'),bench,tf:t.pf,to_:t.to}}
 let teamStatsViewIndex=0, quarterStatSnapshots=[];
 function timeoutRemaining(ti,period){if(!T||!T[ti])return 7;if(period==='total')return T[ti].to;const snap=quarterStatSnapshots[period];if(snap&&snap[ti]&&snap[ti].to!=null)return snap[ti].to;if(period===q)return T[ti].to;return T[ti].to;}
@@ -3077,7 +3384,7 @@ function captureQuarterStats(qn){quarterStatSnapshots[qn]=T.map(t=>({sc:t.sc,tf:
 function quarterTeamView(t,ti,qn){const cur={sc:t.sc,pl:t.pl.map(p=>{const o={};for(const k of ['fg','fa','tm','ta','ftm','fta','orb','rb','as','stl','blk','to','pf','pts','min','drb'])o[k]=p[k]||0;return o})};if(qn==='total')return t;const prev=quarterStatSnapshots[qn-1],end=quarterStatSnapshots[qn];if(!prev && qn>1)return {...t,sc:0,pl:t.pl.map(p=>({...p,fg:0,fa:0,tm:0,ta:0,ftm:0,fta:0,orb:0,rb:0,as:0,stl:0,blk:0,to:0,pf:0,pts:0,min:0,drb:0}))};const base=prev?prev[ti]:{sc:0,pl:cur.pl.map(()=>({}))};const stop=end?end[ti]:cur;return {...t,sc:Math.max(0,stop.sc-base.sc),pl:t.pl.map((p,i)=>{const o={...p};for(const k of ['fg','fa','tm','ta','ftm','fta','orb','rb','as','stl','blk','to','pf','pts','min','drb'])o[k]=Math.max(0,(stop.pl[i][k]||0)-(base.pl[i][k]||0));return o})};}
 function changeTeamStatsView(d){teamStatsViewIndex=perStep(perKeys(),teamStatsViewIndex,d);const el=$('#teamStats');if(el)el.innerHTML=teamStatsHTML();}
 function teamStatsHTML(){const available=perKeys();if(!available.includes(teamStatsViewIndex))teamStatsViewIndex=available[available.length-1];const label=teamStatsViewIndex==='total'?'TOTAL TEAM STATS':perLabel(teamStatsViewIndex);const teamsByIndex=teamStatsViewIndex==='total'?T:T.map((t,i)=>quarterTeamView(t,i,teamStatsViewIndex));/* Match the scoreboard: away team is always left, home team is always right. */const leftTi=1-homeT(),rightTi=homeT(),leftTeam=teamsByIndex[leftTi],rightTeam=teamsByIndex[rightTi];const pfOf=(ti,n)=>quarterStatSnapshots[n]?.[ti]?.tf??(n===q?(T[ti].pf||0):0),foulCount=ti=>{if(teamStatsViewIndex==='total'){let n=0;for(let k=1;k<=q;k++)n+=pfOf(ti,k);return n}return pfOf(ti,teamStatsViewIndex)};const foulMeter=ti=>{const n=foulCount(ti),bonus=teamStatsViewIndex==='total'?inBonus(ti):(teamStatsViewIndex===q&&inBonus(ti))||(teamStatsViewIndex<q&&foulCount(1-ti)>=4);return bonus?'<span class="foul-bonus">BONUS</span>':`<span class="foul-meter" aria-label="${n} team fouls">${[1,2,3,4,5].map(i=>`<i class="${i<=n?'on':''}"></i>`).join('')}</span>`};const S=(t,ti)=>{const f=k=>t.pl.reduce((x,p)=>x+(p[k]||0),0),fg=f('fg'),fa=f('fa'),tm=f('tm'),ta=f('ta'),ftm=f('ftm'),fta=f('fta'),orb=f('orb'),rb=f('rb'),pc=(m,a)=>a?` (${(100*m/a).toFixed(0)}%)`:' (—)';return{'Points':t.sc,'FG':`${fg}/${fa}${pc(fg,fa)}`,'3PT':`${tm}/${ta}${pc(tm,ta)}`,'FT':`${ftm}/${fta}${pc(ftm,fta)}`,'Off. rebounds':orb,'Def. rebounds':Math.max(0,rb-orb),'Total rebounds':rb,'Assists':f('as'),'Steals':f('stl'),'Blocks':f('blk'),'Turnovers':f('to'),'Fouls':f('pf'),'Timeouts remaining':timeoutRemaining(ti,teamStatsViewIndex)}},a=S(leftTeam,leftTi),b=S(rightTeam,rightTi);return`<div class="team-stats-head"><button type="button" aria-label="Previous stats period" onclick="changeTeamStatsView(-1)">&lt;</button><h2>${label}</h2><button type="button" aria-label="Next stats period" onclick="changeTeamStatsView(1)">&gt;</button></div><table class="team-stats"><tr><th>${T[leftTi].short}</th><th class="mid"></th><th>${T[rightTi].short}</th></tr>${Object.keys(a).map(k=>`<tr><td>${a[k]}</td><th scope="row" class="mid">${k}</th><td>${b[k]}</td></tr>`).join('')}</table>`}
-function courtBox(){return `<div class="court-pair">`+T.map(t=>`<table class="oc"><caption>${t.short} · ${t.sc}</caption><tr><th class="l">Player</th><th>PTS</th><th>REB</th><th>AST</th><th>STL</th><th>BLK</th><th>TOV</th><th>PF</th></tr>`+t.on.slice(0,5).slice().sort((x,y)=>POSO[t.pl[x].pos]-POSO[t.pl[y].pos]||x-y).map(i=>{const p=t.pl[i];return `<tr><td class="l"><span class="pos">${p.pos}</span>${hotTag(p,1)} ${p.n}</td><td>${p.pts}</td><td>${p.rb}</td><td>${p.as}</td><td>${p.stl}</td><td>${p.blk}</td><td>${p.to}</td><td${p.pf>=5?' class="warn"':''}>${p.pf}</td></tr>`}).join('')+'</table>').join('')+`</div>`}
+function courtBox(){return `<div class="court-pair">`+T.map(t=>`<table class="oc"><caption>${t.short} · ${t.sc}</caption><tr><th class="l">Player</th><th>PTS</th><th>REB</th><th>AST</th><th>STL</th><th>BLK</th><th>TOV</th><th>PF</th></tr>`+t.on.slice(0,5).slice().sort((x,y)=>POSO[t.pl[x].pos]-POSO[t.pl[y].pos]||x-y).map(i=>{const p=t.pl[i];return `<tr><td class="l"><span class="pos">${p.pos}</span>${hotTag(p,1)} ${p.n.trim().split(/\s+/)[0].charAt(0)}. ${p.n.trim().split(/\s+/).slice(-1)[0]}</td><td>${p.pts}</td><td>${p.rb}</td><td>${p.as}</td><td>${p.stl}</td><td>${p.blk}</td><td>${p.to}</td><td${p.pf>=5?' class="warn"':''}>${p.pf}</td></tr>`}).join('')+'</table>').join('')+`</div>`}
 function buildOppRot(){const el=$('#oppRot');el.innerHTML='';T[1].pl.forEach((p,i)=>{const e=document.createElement('div');e.className='r';e.dataset.i=i;e.innerHTML='<span class="pp"></span><span class="nn"></span><span class="eb"><i></i><b>100%</b></span><span class="pf"></span><span class="pt"></span><span class="tg"></span>';el.appendChild(e)});el.style.height=(T[1].pl.length*ROW+SEP)+'px';updOppRot()}
 function updOppRot(){if(!T||!T[1]||!$('#oppRot').children.length)return;const t=T[1],plan=[...t.plan].sort((a,b)=>POSO[t.pl[a].pos]-POSO[t.pl[b].pos]||t.pl[b].ovr-t.pl[a].ovr),bench=t.pl.map((_,i)=>i).filter(i=>!t.plan.has(i)).sort((a,b)=>t.pl[b].ovr-t.pl[a].ovr);const place=(i,y)=>{const e=$(`#oppRot .r[data-i="${i}"]`),p=t.pl[i],on=t.on.includes(i),inP=t.plan.has(i);e.style.transform=`translateY(${y}px)`;e.className='r'+(oppSel===i?' sel':'')+(inP&&!on?' ent':'')+(!inP&&on?' lea':'')+(p.pf>=6?' out':'');e.children[0].textContent=p.pos;e.children[1].innerHTML=hotName(p);const b=e.children[2].firstChild;b.style.width=p.en+'%';b.style.background=p.en<35?'#ee5b45':p.en<60?'#ffd23f':'#58c98b';e.children[2].lastElementChild.textContent=Math.round(p.en)+'%';e.children[3].textContent=p.pf;e.children[4].textContent=p.pts;e.children[5].textContent=inP&&!on?'IN':!inP&&on?'OUT':''};plan.forEach((i,k)=>place(i,k*ROW));bench.forEach((i,k)=>place(i,5*ROW+SEP+k*ROW))}
 function oppRowTap(i){const t=T[1];if(oppSel===null)oppSel=i;else if(oppSel===i)oppSel=null;else{const a=oppSel,b=i,pa=t.plan.has(a),pb=t.plan.has(b);if(pa!==pb){const out=pa?a:b,inn=pa?b:a;if(t.pl[inn].pf<6){t.plan.delete(out);t.plan.add(inn);if(canSubNow())applyPlan(t);else{const sm=$('#swapMsg');if(sm)sm.textContent='Queued: substitutions happen only at a legal stoppage.'}}oppSel=null}else oppSel=i}updOppRot()}
@@ -3106,8 +3413,8 @@ function ui(){
  $('#s0').style.borderColor=T[0].col;$('#s1').style.borderColor=T[1].col;syncSides();
  $('#tl').textContent=TN[T[0].tempo-1];$('#gl').textContent=T[0].gam<35?'Stay home':T[0].gam>65?'Help and gamble':'Balanced';
  updRot();$('#tips').innerHTML=tips.length?tips.map(x=>{const m=/^(\S+ \S+)\s+([\s\S]*)$/.exec(x);return m?`<li><span class="tt">${m[1]}</span>${m[2]}</li>`:`<li>${x}</li>`}).join(''):'<li class="dim">No advice yet.</li>';
- renderScreens();if(!$('#fbm').classList.contains('hide')){setTab(box(fbT));$('#fbTitle').textContent=T[fbT].name+' ('+(fbT+1)+'/2)'}renderPBP();$('#courtbox').innerHTML=courtBox();const tsEl=$('#teamStats');if(tsEl)tsEl.innerHTML=teamStatsHTML();renderPos();slRender();renderScouting();document.querySelectorAll('[data-side]').forEach(b=>b.classList.toggle('on',+b.dataset.side===sideTab));updOppRot();renderMatchupEditor();boxOneSync();applyManualMatchups();
- $('#pp').textContent=paused?'Play':'Pause';{const hb=$('#hackBtn'),on=!!T[0].hack;hb.classList.toggle('on',on);hb.setAttribute('aria-pressed',String(on));hb.textContent='Intentional foul: '+(on?'On':'Off')}$('#to').textContent=`Timeout (${T[0].to})`;{const noTO=!!(G&&(G.tipPending||G.ph==='tip')),tb=$('#to');tb.disabled=noTO;tb.title=noTO?'Timeouts are not available before the game starts or during the jump ball.':''}if($('#debugMode'))$('#debugMode').onchange=()=>{if(!$('#debugMode').checked)$('#debugLog').innerHTML='';else passDebug('Diagnostics enabled. Candidate logs appear when the offense evaluates a pass.')};
+ renderScreens();if(!$('#fbm').classList.contains('hide')){setTab(box(fbT));$('#fbTitle').innerHTML=T[fbT].name+'<span class="fb-team-count">('+(fbT+1)+'/2)</span>'}renderPBP();$('#courtbox').innerHTML=courtBox();const tsEl=$('#teamStats');if(tsEl)tsEl.innerHTML=teamStatsHTML();renderPos();slRender();renderScouting();document.querySelectorAll('[data-side]').forEach(b=>b.classList.toggle('on',+b.dataset.side===sideTab));updOppRot();renderMatchupEditor();boxOneSync();applyManualMatchups();
+ $('#pp').textContent=paused?'Play':'Pause';{const hb=$('#hackBtn'),on=!!T[0].hack;hb.classList.toggle('on',on);hb.setAttribute('aria-pressed',String(on));hb.textContent='Intentional foul: '+(on?'On':'Off')}{const noTO=!!(G&&(G.tipPending||G.ph==='tip')),tb=$('#to');tb.disabled=noTO;tb.textContent=noTO?'Timeout':'Request';tb.title=noTO?'Timeouts are not available before the game starts or during the jump ball.':''}if($('#debugMode'))$('#debugMode').onchange=()=>{if(!$('#debugMode').checked)$('#debugLog').innerHTML='';else passDebug('Diagnostics enabled. Candidate logs appear when the offense evaluates a pass.')};
  document.querySelectorAll('[data-sp]').forEach(b=>b.classList.toggle('on',+b.dataset.sp===speed));
  document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('on',+b.dataset.tab===tab))}
 const opt=(el,items)=>items.forEach(([v,t])=>el.add(new Option(t,v)));
@@ -3131,7 +3438,12 @@ $('#goCont').onclick=()=>{const w=$('#warn');w.textContent='';try{SZ=loadSZ();if
 $('#start').style.pointerEvents='auto';document.querySelectorAll('#start button,#start select').forEach(el=>{el.style.pointerEvents='auto';el.style.position='relative';el.style.zIndex='10001'});
 $('#tempo').oninput=e=>{T[0].tempo=+e.target.value;ui()};$('#gam').oninput=e=>{T[0].gam=+e.target.value;ui()};$('#shotprofile').onchange=e=>{T[0].shotprofile=e.target.value;ui()};$('#gameplan').onchange=e=>{T[0].gameplan=e.target.value;ui()};$('#hackBtn').onclick=()=>{T[0].hack=!T[0].hack;ui()};$('#emph').onchange=e=>{T[0].emph=e.target.value;ui()};$('#rebstrat').onchange=e=>{T[0].rebstrat=e.target.value;ui()};document.querySelectorAll('[data-side]').forEach(b=>b.onclick=()=>{sideTab=+b.dataset.side;ui()});const oppRotEl=$('#oppRot');if(oppRotEl)oppRotEl.onpointerdown=e=>{const r=e.target.closest('.r');if(r)oppRowTap(+r.dataset.i)};
 ['style','def','cov'].forEach(id=>$('#'+id).onchange=e=>{T[0][id]=e.target.value;ui();try{zeSync()}catch(_){}});$('#auto').onchange=e=>T[0].auto=e.target.checked;
-$('#drvOn').onchange=e=>{T[0].drive=e.target.checked};
+$('#drvOn').onchange=e=>{T[0].pnr=e.target.checked};$('#f3').onchange=e=>{T[0].f3=e.target.checked};
+ const situationSync=()=>{const tob=$('#to');if(tob&&tob.disabled){const pregame=!!(G&&(G.tipPending||G.ph==='tip'));tob.textContent=pregame?'Timeout':'Requested'}[['auto','autoBtn'],['drvOn','drvBtn'],['f3','f3Btn']].forEach(([c,b])=>{const x=$('#'+c),y=$('#'+b);if(x&&y){y.textContent=x.checked?'On':'Off';y.classList.toggle('on',x.checked);y.setAttribute('aria-pressed',String(x.checked))}});const h=$('#hackBtn');if(h){h.textContent=T[0].hack?'On':'Off';h.classList.toggle('on',!!T[0].hack)}};
+ [['auto','autoBtn'],['drvOn','drvBtn'],['f3','f3Btn']].forEach(([c,b])=>{$('#'+b).onclick=()=>{const x=$('#'+c);x.checked=!x.checked;x.dispatchEvent(new Event('change',{bubbles:true}));situationSync()}});
+ $('#to').addEventListener('click',()=>{const b=$('#to');if(b.disabled)return;b.textContent='Requested';b.disabled=true});
+ const oldUi=ui;ui=function(){const r=oldUi.apply(this,arguments);situationSync();return r};
+
 $('#coachDefSave').onclick=saveCoachDefaults;$('#coachDefReset').onclick=resetCoachDefaults;
 /* ---- Player shot locations: current-game panel + persistent Defaults editor ---- */
 let _slKey='',_slRows=[];
@@ -3175,11 +3487,11 @@ if(typeof ResizeObserver==='function')new ResizeObserver(fit).observe(cv);
    QK.coach: 'away' | 'home' | 'none'. 'none' = the engine's CPU coach (AI) drives BOTH teams and T[0] auto-subs. */
 const QK_TABS=['play','coaching','settings'];
 function quickNameParts(code){const full=TEAM_NAMES.find(t=>t[0]===code)[1],nick=/Trail Blazers$/.test(full)?'Trail Blazers':full.split(' ').pop();return{city:full.slice(0,full.length-nick.length).trim(),nick}}
-function quickColor(code){const c=(TEAM_COLORS[code]||['#fff'])[0],m=/^#?([0-9a-f]{6})$/i.exec(c);if(!m)return c;const n=parseInt(m[1],16),l=((n>>16)&255)*.3+((n>>8)&255)*.59+(n&255)*.11;return l<70?'#e8eefc':c}   // very dark team colours would vanish on the dark background
+function quickColor(code){return (TEAM_COLORS[code]||['#fff'])[0]}   // Always use the team's actual primary color; white outline keeps dark colors readable.
 const quickTeams=()=>[...TEAM_NAMES].sort((a,b)=>a[1].localeCompare(b[1]));   // alphabetical by full name: dropdown and < > use the same order
 function renderQuick(){
  [['away','#qsAway','AWAY'],['home','#qsHome','HOME']].forEach(([side,sel,tag])=>{const code=QK[side],n=quickNameParts(code),col=quickColor(code);
-  $(sel).classList.toggle('sel',QK.coach===side);$(sel).innerHTML=`<div class="tag">${tag}${QK.coach===side?' · YOU COACH':''}</div><img alt="" src="https://cdn.nba.com/logos/nba/${TEAM_IDS[code]}/global/L/logo.svg" onerror="this.style.visibility='hidden'"><div class="city">${n.city}</div><div class="nick" style="color:${col};text-shadow:0 0 22px ${col}66">${n.nick}</div><div class="pick"><button type="button" data-qp="${side}" data-d="-1" aria-label="Previous team">&lt;</button><select data-qsel="${side}" aria-label="${tag} team">${quickTeams().map(t=>`<option value="${t[0]}"${t[0]===code?' selected':''}>${t[1]}</option>`).join('')}</select><button type="button" data-qp="${side}" data-d="1" aria-label="Next team">&gt;</button></div>`});
+  $(sel).classList.toggle('sel',QK.coach===side);$(sel).innerHTML=`<div class="tag">${tag}</div><img alt="" src="https://cdn.nba.com/logos/nba/${TEAM_IDS[code]}/global/L/logo.svg" onerror="this.style.visibility='hidden'"><div class="city">${n.city}</div><div class="nick" style="color:${col};text-shadow:0 0 22px ${col}66">${n.nick}</div><div class="pick"><button type="button" data-qp="${side}" data-d="-1" aria-label="Previous team">&lt;</button><select data-qsel="${side}" aria-label="${tag} team">${quickTeams().map(t=>`<option value="${t[0]}"${t[0]===code?' selected':''}>${t[1]}</option>`).join('')}</select><button type="button" data-qp="${side}" data-d="1" aria-label="Next team">&gt;</button></div>`});
  $('#qgHint').textContent=QK.coach==='none'?'No team selected: the AI coaches both teams. Click a team to coach it.':'You coach the highlighted team. Click it again and the AI coaches both.';$('#qgWarn').textContent=QK.away===QK.home?'Choose two different teams.':''}
 function openQuickSetup(){$('#home').classList.add('hide');$('#start').classList.add('hide');renderQuick();$('#qg').classList.remove('hide')}
 function showHome(){}
@@ -3281,6 +3593,8 @@ function rosterOf(code){if(!RC[code]){const t=mkTeam(code,(TEAM_COLORS[code]||['
 function sortRows(rows,get,dir){return rows.slice().sort((a,b)=>{const x=get(a),y=get(b);if(x==null&&y==null)return tbCmp(a,b);if(x==null)return 1;if(y==null)return -1;return(typeof x==='string'?x.localeCompare(y):x-y)*dir||tbCmp(a,b)})}
 function xs(k,v){if(XS[k]===v&&(k==='rs'||k==='ss')){XS[k==='rs'?'rd':'sd']*=-1}else{XS[k]=v;if(k==='rs')XS.rd=(v==='n'||v==='pos')?1:-1;if(k==='ss')XS.sd=(v==='n'||v==='t')?1:-1}XS.v++;ui()}
 function xset(k,v){XS[k]=v;XS.v++;ui()}
+function rosterTeamStep(delta){const i=TEAM_NAMES.findIndex(t=>t[0]===XS.rt);xset('rt',TEAM_NAMES[(i+delta+TEAM_NAMES.length)%TEAM_NAMES.length][0])}
+addEventListener('keydown',e=>{if(activeScreen!=='roster')return;if(!/^Arrow(Left|Right)$/.test(e.key)||/^(SELECT|INPUT|TEXTAREA)$/.test((e.target||{}).tagName))return;if(document.querySelector('.modal:not(.hide),.gmodal.open'))return;rosterTeamStep(e.key==='ArrowRight'?1:-1);e.preventDefault()});
 const arr=(on,d)=>on?(d>0?' ▲':' ▼'):'';
 function rosterEdit(code,name,field,value){const rows=rosterOf(code),p=rows.find(x=>x.n===name);if(!p)return;const num=Number(value);if(field==='pos'){p.pos=value}else if(field==='ovr'){p.ovr=c99(num)}else if(field==='jersey'){p.jersey=Math.max(0,Math.min(99,Math.round(num)));p.num=String(p.jersey)}else if(field.startsWith('attr.')){p.attr[field.slice(5)]=c99(num)}else if(field==='s3')p.s3=c99(num);else if(field==='mid')p.mid=c99(num);else if(field==='pas')p.pas=c99(num);else if(field==='fin')p.fin=c99(num);else return;try{const all=JSON.parse(localStorage.getItem('hc_roster_edits_v1')||'{}');const e=all[code]||(all[code]={}),o=e[name]||(e[name]={});o.pos=p.pos;o.ovr=p.ovr;o.jersey=p.jersey;o.attr={...p.attr};o.s3=p.s3;o.mid=p.mid;o.pas=p.pas;o.fin=p.fin;localStorage.setItem('hc_roster_edits_v1',JSON.stringify(all))}catch(e){};T?.forEach(t=>{if(t.code===code){const live=t.pl.find(x=>x.n===name);if(live){if(field==='pos')live.pos=p.pos;else if(field==='ovr')live.ovr=p.ovr;else if(field==='jersey'){live.jersey=p.jersey;live.num=p.num}else if(field.startsWith('attr.'))live.attr[field.slice(5)]=p.attr[field.slice(5)];else if(field==='s3')live.s3=p.s3;else if(field==='mid')live.mid=p.mid;else if(field==='pas')live.pas=p.pas;else if(field==='fin')live.fin=p.fin;}}});XS.v++;ui()}
 const R_AKEYS=[['Speed','speed'],['Agility','agility'],['Strength','strength'],['Vertical','vertical'],['Stamina','stamina'],['IQ','iq'],['Handle','handle'],['Finishing','finish'],['Perimeter D','perimeter'],['Interior D','interior'],['O.Reb','oreb'],['D.Reb','dreb']],R_POS=['PG','SG','SF','PF','C'];
@@ -3296,14 +3610,14 @@ document.addEventListener('mouseout',e=>{const r=e.relatedTarget;if(!r||!(r.clos
 window.addEventListener('blur',clr)})();
 const rVal=(p,f)=>f==='ovr'?p.ovr:f==='s3'?p.s3:f==='mid'?p.mid:f==='pas'?p.pas:p.attr[f.slice(5)];
 function rosterHTML(){const rows=rosterOf(XS.rt),get=p=>XS.rs==='n'?p.n:XS.rs==='pos'?p.pos:XS.rs==='ovr'?p.ovr:p.x[XS.rs],sorted=sortRows(rows,get,XS.rd),akeys=R_AKEYS,v=x=>x==null||!Number.isFinite(x)?'\u2013':Math.round(x),q=n=>JSON.stringify(n).replace(/&/g,'&amp;').replace(/"/g,'&quot;');
- return`<div class="bar"><label>Team <select onchange="xset('rt',this.value)">${TEAM_NAMES.map(t=>`<option value="${t[0]}"${t[0]===XS.rt?' selected':''}>${t[1]}</option>`).join('')}</select></label></div><div class="dim" style="font-size:11px">Click a player to edit their position, overall, and attributes. Ratings are 25\u201399. Changes save in this browser and apply to future games; edits to the team currently on court update immediately where possible.</div><div class="rwrap"><table><colgroup><col style="width:200px">${'<col style="width:64px">'.repeat(17)}</colgroup><thead><tr><th scope="col">Player</th><th scope="col" title="Position">Pos</th><th scope="col" title="Overall">OVR</th>${akeys.map(a=>`<th scope="col" title="${a[0]}">${R_ABBR[a[1]]}</th>`).join('')}<th scope="col" title="Three-point shot">3PT</th><th scope="col" title="Mid-range shot">MID</th><th scope="col" title="Passing">PAS</th></tr></thead><tbody>${sorted.map(p=>`<tr tabindex="0" role="button" aria-label="Edit ${String(p.n).replace(/"/g,'&quot;')}" onclick="rosterOpen(${q(p.n)})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();rosterOpen(${q(p.n)})}"><td>${p.n}</td><td>${p.pos}</td><td>${v(p.ovr)}</td>${akeys.map(a=>`<td>${v(p.attr[a[1]])}</td>`).join('')}<td>${v(p.s3)}</td><td>${v(p.mid)}</td><td>${v(p.pas)}</td></tr>`).join('')}</tbody></table></div>`}
+ return`<div class="roster-team-nav"><button type="button" aria-label="Previous team" onclick="rosterTeamStep(-1)">&lt;</button><div class="roster-team-title">${(TEAM_NAMES.find(t=>t[0]===XS.rt)||TEAM_NAMES[0])[1]}</div><button type="button" aria-label="Next team" onclick="rosterTeamStep(1)">&gt;</button><label class="roster-team-select-label"><select aria-label="Select team" onchange="xset('rt',this.value)">${TEAM_NAMES.map(t=>`<option value="${t[0]}"${t[0]===XS.rt?' selected':''}>${t[1]}</option>`).join('')}</select></label></div><div class="dim" style="font-size:11px">Click a player to edit their position, overall, and attributes. Ratings are 25\u201399. Changes save in this browser and apply to future games; edits to the team currently on court update immediately where possible.</div><div class="rwrap"><table><colgroup><col style="width:200px">${'<col style="width:64px">'.repeat(17)}</colgroup><thead><tr><th scope="col">Player</th><th scope="col" title="Position">Pos</th><th scope="col" title="Overall">OVR</th>${akeys.map(a=>`<th scope="col" title="${a[0]}">${R_ABBR[a[1]]}</th>`).join('')}<th scope="col" title="Three-point shot">3PT</th><th scope="col" title="Mid-range shot">MID</th><th scope="col" title="Passing">PAS</th></tr></thead><tbody>${sorted.map(p=>`<tr tabindex="0" role="button" aria-label="Edit ${String(p.n).replace(/"/g,'&quot;')}" onclick="rosterOpen(${q(p.n)})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();rosterOpen(${q(p.n)})}"><td>${p.n}</td><td>${p.pos}</td><td>${v(p.ovr)}</td>${akeys.map(a=>`<td>${v(p.attr[a[1]])}</td>`).join('')}<td>${v(p.s3)}</td><td>${v(p.mid)}</td><td>${v(p.pas)}</td></tr>`).join('')}</tbody></table></div>`}
 function rosterClose(){const m=document.getElementById('rmodal');if(!m)return;const back=m._back;m.remove();if(back&&document.contains(back))back.focus()}
 function rosterOpen(name){const code=XS.rt,p=rosterOf(code).find(x=>x.n===name);if(!p)return;rosterClose();
  const back=document.activeElement,esc=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'),
  fld=(f,l,val)=>`<label>${l}<input type="number" inputmode="numeric" min="25" max="99" step="1" data-f="${f}" data-o="${val==null||!Number.isFinite(val)?'':Math.round(val)}" value="${val==null||!Number.isFinite(val)?'':Math.round(val)}"></label>`,
  tm=(TEAM_NAMES.find(t=>t[0]===code)||[code,code])[1],m=document.createElement('div');
  m.id='rmodal';m._back=back;m.className='gmodal open';m.setAttribute('role','dialog');m.setAttribute('aria-modal','true');m.setAttribute('aria-labelledby','rmh');
- m.innerHTML=`<div class="rmc"><div class="rmh"><div><h2 id="rmh">${esc(p.n)}</h2><div class="dim">${esc(tm)}</div></div><button type="button" id="rmx" aria-label="Close">\u2715</button></div><div class="rmb"><div class="rmg"><label>Position<select data-f="pos" data-o="${p.pos}">${R_POS.map(x=>`<option${p.pos===x?' selected':''}>${x}</option>`).join('')}</select></label>${fld('ovr','OVR',p.ovr)}${R_AKEYS.map(a=>fld('attr.'+a[1],a[0],p.attr[a[1]])).join('')}${fld('s3','3PT',p.s3)}${fld('mid','Mid',p.mid)}${fld('pas','Passing',p.pas)}</div></div><div class="rmf"><button type="button" id="rmc">Cancel</button><button type="button" id="rms" class="rms">Save</button></div></div>`;
+ m.innerHTML=`<div class="rmc"><div class="rmh"><div><h2 id="rmh">${esc(p.n)}</h2><div class="dim">${esc(tm)}</div></div><button type="button" id="rmx" aria-label="Close">X</button></div><div class="rmb"><div class="rmg"><label>Position<select data-f="pos" data-o="${p.pos}">${R_POS.map(x=>`<option${p.pos===x?' selected':''}>${x}</option>`).join('')}</select></label>${fld('ovr','OVR',p.ovr)}${R_AKEYS.map(a=>fld('attr.'+a[1],a[0],p.attr[a[1]])).join('')}${fld('s3','3PT',p.s3)}${fld('mid','Mid',p.mid)}${fld('pas','Passing',p.pas)}</div></div><div class="rmf"><button type="button" id="rmc">Cancel</button><button type="button" id="rms" class="rms">Save</button></div></div>`;
  const save=()=>{const ch=[];m.querySelectorAll('[data-f]').forEach(el=>{const val=el.value.trim();if(val===''||val===el.dataset.o)return;if(el.tagName==='INPUT'&&!Number.isFinite(Number(val)))return;ch.push([el.dataset.f,val])});rosterClose();ch.forEach(([f,val])=>rosterEdit(code,name,f,val))};
  m.addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Escape'){e.preventDefault();rosterClose()}else if(e.key==='Enter'&&e.target.tagName==='INPUT'){e.preventDefault();save()}else if(e.key==='Tab'){const f=[...m.querySelectorAll('button,input,select')].filter(x=>!x.disabled);if(!f.length)return;const a=f[0],b=f[f.length-1];if(e.shiftKey&&document.activeElement===a){e.preventDefault();b.focus()}else if(!e.shiftKey&&document.activeElement===b){e.preventDefault();a.focus()}}});
  m.addEventListener('mousedown',e=>{if(e.target===m)rosterClose()});
@@ -3327,7 +3641,7 @@ function scorePair(winA){const lo=Math.round(96+R()*22),hi=lo+1+Math.floor(R()*1
 function simLeagueGame(a,b,aWin,aHome){const[sa,sb]=scorePair(aWin),h=aHome?a:b,v=aHome?b:a,hs=aHome?sa:sb,vs=aHome?sb:sa,g={h,v,hs,vs,box:{h:genTeamBox(h,hs),v:genTeamBox(v,vs)}};addPS(h,g.box.h.p);addPS(v,g.box.v.p);return g}
 function userDayGame(g,us,th,live){const me=SZ.me,h=g.home?me:g.opp,v=g.home?g.opp:me,hs=g.home?us:th,vs=g.home?th:us;let bh,bv;if(live){const u=rowsOfObj(live[0]),o=rowsOfObj(live[1]);bh=g.home?u:o;bv=g.home?o:u}else{bh=genTeamBox(h,hs);bv=genTeamBox(v,vs);addPS(h,bh.p);addPS(v,bv.p)}return{h,v,hs,vs,user:true,box:{h:bh,v:bv}}}
 function tStat(b){const S=i=>b.p.reduce((a,r)=>a+r[i],0),f=(m,a)=>`${m}/${a}${a?' ('+Math.round(100*m/a)+'%)':''}`;return{'Points':b.sc,'Field goals':f(S(10),S(11)),'3 pointers':f(S(12),S(13)),'Free throws':f(S(14),S(15)),'Rebounds':S(4),'Assists':S(5),'Steals':S(6),'Blocks':S(7),'Turnovers':S(8),'Fouls':S(9)}}
-function boxRows(b){const S=i=>b.p.reduce((a,r)=>a+r[i],0),cols=[['n','Player',r=>r[0]],['min','MIN',r=>r[2]],['pts','PTS',r=>r[3]],['reb','REB',r=>r[4]],['ast','AST',r=>r[5]],['stl','STL',r=>r[6]],['blk','BLK',r=>r[7]],['to','TO',r=>r[8]],['pf','PF',r=>r[9]],['fg','FG',r=>r[10]+r[11]/1000],['tp','3P',r=>r[12]+r[13]/1000],['ft','FT',r=>r[14]+r[15]/1000]];return`<table><caption>${b.c} \u2013 ${b.sc}</caption><tr>${cols.map(c=>bxTh(c[0],c[1])).join('')}</tr>${bxSorted(b.p,cols).map(r=>`<tr><td>${r[0]} <span class="dim">${r[1]}</span></td><td>${r[2]}</td><td>${r[3]}</td><td>${r[4]}</td><td>${r[5]}</td><td>${r[6]}</td><td>${r[7]}</td><td>${r[8]}</td><td>${r[9]}</td><td>${r[10]}-${r[11]}</td><td>${r[12]}-${r[13]}</td><td>${r[14]}-${r[15]}</td></tr>`).join('')}<tr><th>Team</th><td>${S(2)}</td><td>${S(3)}</td><td>${S(4)}</td><td>${S(5)}</td><td>${S(6)}</td><td>${S(7)}</td><td>${S(8)}</td><td>${S(9)}</td><td>${S(10)}-${S(11)}</td><td>${S(12)}-${S(13)}</td><td>${S(14)}-${S(15)}</td></tr></table>`}
+function boxRows(b){const S=i=>b.p.reduce((a,r)=>a+r[i],0),cols=[['n','Player',r=>r[0]],['min','MIN',r=>r[2]],['pts','PTS',r=>r[3]],['reb','REB',r=>r[4]],['ast','AST',r=>r[5]],['stl','STL',r=>r[6]],['blk','BLK',r=>r[7]],['to','TO',r=>r[8]],['pf','PF',r=>r[9]],['fg','FG',r=>r[10]+r[11]/1000],['tp','3P',r=>r[12]+r[13]/1000],['ft','FT',r=>r[14]+r[15]/1000]];return`<table><tr>${cols.map(c=>bxTh(c[0],c[1])).join('')}</tr>${bxSorted(b.p,cols).map(r=>`<tr><td>${r[0]} <span class="dim">${r[1]}</span></td><td>${r[2]}</td><td>${r[3]}</td><td>${r[4]}</td><td>${r[5]}</td><td>${r[6]}</td><td>${r[7]}</td><td>${r[8]}</td><td>${r[9]}</td><td>${r[10]}-${r[11]}</td><td>${r[12]}-${r[13]}</td><td>${r[14]}-${r[15]}</td></tr>`).join('')}<tr><th>Team</th><td>${S(2)}</td><td>${S(3)}</td><td>${S(4)}</td><td>${S(5)}</td><td>${S(6)}</td><td>${S(7)}</td><td>${S(8)}</td><td>${S(9)}</td><td>${S(10)}-${S(11)}</td><td>${S(12)}-${S(13)}</td><td>${S(14)}-${S(15)}</td></tr></table>`}
 /* Games tab Full Box Score: TOTAL plus FIRST..FOURTH QUARTER, same order, titles and end-of-range behaviour as the Play tab. Quarter views use only the stored per-quarter data (box.q); a game without it (league-engine games, sim-day results, older saves) keeps accurate TOTAL stats and says so. */
 let gmPeriod='total';
 /* q.ot = number of overtime periods (older saves stored 1 meaning "went to overtime"). Periods 5.. are OT1, OT2, ... */
@@ -3364,12 +3678,12 @@ function renderGameBody(){const m=$('#gmodal');if(!m||!_gb)return;if(!gmPeriods(
  $('#gmTs').innerHTML=`<tr><th>${_gb.v.c}</th><th></th><th>${_gb.h.c}</th></tr>`+keys.map(k=>`<tr><td>${ok?a[k]:'\u2014'}</td><th scope="row">${k}</th><td>${ok?b[k]:'\u2014'}</td></tr>`).join('');
  $('#gmBox').innerHTML=ok?boxRows(v)+boxRows(h):`<div class="dim" style="grid-column:1/-1;padding:10px 0">No recorded stats for the ${lab.toLowerCase()} of this game.</div>`}
 function openGame(src,i,j,ser){const g=src==='p'?SZ.po.log[i]:src==='i'?SZ.pil[i]:(SZ.days[i]&&SZ.days[i].games[j]);if(!g||!g.box)return;let m=$('#gmodal');if(!m){m=document.createElement('div');m.id='gmodal';m.className='gmodal';m.setAttribute('role','dialog');m.setAttribute('aria-modal','true');m.onclick=e=>{if(e.target===m)closeGame()};document.body.appendChild(m)}
- _gser=ser&&ser.length>1?ser:(ser&&ser.length===1?ser:null);_gsi=0;m.innerHTML=`<div class="gm-card"><div class="gm-h"><h2 id="gmTitle">${g.v} ${g.vs} at ${g.h} ${g.hs}</h2><button id="gmx" onclick="closeGame()" aria-label="Close box score">\u2715 Close</button></div>${_gser?'<div class="fb-period" id="gmGame"></div>':''}<div class="fb-period" id="gmNav"></div><div class="dim" id="gmNote" style="text-align:center;font-size:12px;margin:-2px 0 8px"></div><div class="gm-top"><img class="gm-logo" id="gmLv" alt="${g.v}" src="https://cdn.nba.com/logos/nba/${TEAM_IDS[g.v]}/global/L/logo.svg" onerror="this.style.visibility='hidden'"><table class="gm-ts" id="gmTs"></table><img class="gm-logo" id="gmLh" alt="${g.h}" src="https://cdn.nba.com/logos/nba/${TEAM_IDS[g.h]}/global/L/logo.svg" onerror="this.style.visibility='hidden'"></div><div class="gm-box" id="gmBox"></div></div>`;_gb=g.box;gmPeriod='total';if(_gser)seriesHead();renderGameBody();m.classList.add('open');$('#gmx').focus()}
+ _gser=ser&&ser.length>1?ser:(ser&&ser.length===1?ser:null);_gsi=0;m.innerHTML=`<div class="gm-card"><div class="gm-h"><h2 id="gmTitle">${g.v} at ${g.h}</h2><button id="gmx" onclick="closeGame()" aria-label="Close box score">\u2715</button></div>${_gser?'<div class="fb-period" id="gmGame"></div>':''}<div class="fb-period" id="gmNav"></div><div class="dim" id="gmNote" style="text-align:center;font-size:12px;margin:-2px 0 8px"></div><div class="gm-top"><img class="gm-logo" id="gmLv" alt="${g.v}" src="https://cdn.nba.com/logos/nba/${TEAM_IDS[g.v]}/global/L/logo.svg" onerror="this.style.visibility='hidden'"><table class="gm-ts" id="gmTs"></table><img class="gm-logo" id="gmLh" alt="${g.h}" src="https://cdn.nba.com/logos/nba/${TEAM_IDS[g.h]}/global/L/logo.svg" onerror="this.style.visibility='hidden'"></div><div class="gm-box" id="gmBox"></div></div>`;_gb=g.box;gmPeriod='total';if(_gser)seriesHead();renderGameBody();m.classList.add('open');$('#gmx').focus()}
 /* Playoff series: every logged game of a matchup, newest data from SZ.po.log. A GAME n < > row steps between them above the period selector. */
 let _gser=null,_gsi=0;
 function serGames(a,b){if(!a||!b||!SZ.po)return[];const out=[];(SZ.po.log||[]).forEach((x,i)=>{if(x.box&&((x.h===a.c&&x.v===b.c)||(x.h===b.c&&x.v===a.c)))out.push(i)});return out}
 function openSeries(k,i){const P=SZ.po;if(!P)return;const s=P.S[k]&&P.S[k][i];if(!s)return;const l=serGames(s.a,s.b);if(l.length)openGame('p',l[0],0,l)}
-function seriesHead(){const g=SZ.po.log[_gser[_gsi]],n=$('#gmGame');if(!g)return;_gb=g.box;const t=$('#gmTitle');if(t)t.textContent=`${g.v} ${g.vs} at ${g.h} ${g.hs}`;[['gmLv',g.v],['gmLh',g.h]].forEach(([id,c])=>{const im=$('#'+id);if(im){im.alt=c;im.style.visibility='';im.src=`https://cdn.nba.com/logos/nba/${TEAM_IDS[c]}/global/L/logo.svg`}});
+function seriesHead(){const g=SZ.po.log[_gser[_gsi]],n=$('#gmGame');if(!g)return;_gb=g.box;const t=$('#gmTitle');if(t)t.textContent=`${g.v} at ${g.h}`;[['gmLv',g.v],['gmLh',g.h]].forEach(([id,c])=>{const im=$('#'+id);if(im){im.alt=c;im.style.visibility='';im.src=`https://cdn.nba.com/logos/nba/${TEAM_IDS[c]}/global/L/logo.svg`}});
  if(n)n.innerHTML=`<button type="button" id="gmGPrev" aria-label="Previous game of the series" onclick="changeSeriesGame(-1)"${_gser.length<2?' disabled':''}>&lt;</button><strong id="gmGameTitle">GAME ${g.gn||_gsi+1}</strong><button type="button" id="gmGNext" aria-label="Next game of the series" onclick="changeSeriesGame(1)"${_gser.length<2?' disabled':''}>&gt;</button>`}
 function changeSeriesGame(d){if(!_gser)return;_gsi=(_gsi+d+_gser.length)%_gser.length;gmPeriod='total';seriesHead();renderGameBody()}
 function closeGame(){const m=$('#gmodal');if(m)m.classList.remove('open')}
@@ -3420,7 +3734,7 @@ sideTab=1;
  tag(rot,'coaching');tag(document.querySelector('.app>aside'),'coaching');
  // Keep the on-court box score and total team stats in the right sidebar beside the court.
  const b0=document.querySelector('[data-side="0"]');if(b0)b0.remove();
- const col=document.createElement('div'),ps=document.createElement('section'),ts=document.createElement('section');col.id='playCol';col.dataset.screen='play';ps.className='card';ps.id='playSide';ps.innerHTML='<div class="ph"><h2>On-court box score</h2><button id="fbBtn" type="button">Full Box Score</button></div>';ps.appendChild($('#side0'));ts.className='card';ts.id='teamPanel';ts.innerHTML='<div id="teamStats"></div>';col.appendChild(ps);col.appendChild(ts);app.appendChild(col);$('#fbBtn').onclick=()=>{fbT=0;fbPeriod='total';$('#fbm').classList.remove('hide');if(T)setTab(box(fbT));$('#fbTitle').textContent=T?T[fbT].name:''};
+ const col=document.createElement('div'),ps=document.createElement('section'),ts=document.createElement('section');col.id='playCol';col.dataset.screen='play';ps.className='card';ps.id='playSide';ps.innerHTML='<div class="ph"><h2>On-court box score</h2><button id="fbBtn" type="button">Full Box Score</button></div>';ps.appendChild($('#side0'));ts.className='card';ts.id='teamPanel';ts.innerHTML='<div id="teamStats"></div>';col.appendChild(ps);col.appendChild(ts);app.appendChild(col);$('#fbBtn').onclick=()=>{fbT=0;fbPeriod='total';$('#fbm').classList.remove('hide');if(T)setTab(box(fbT));$('#fbTitle').innerHTML=T?T[fbT].name+'<span class="fb-team-count">('+(fbT+1)+'/2)</span>':''};
  [['games','Games'],['stats','Stats'],['roster','Roster'],['settings','Settings']].forEach(([k,t])=>{const e=document.createElement('section');e.className='card scr';e.id='scr'+k;e.dataset.screen=k;e.setAttribute('aria-label',t);M.appendChild(e)});
  const tabs=document.querySelector('.gtabs'),dr=$('#gdrawer');
  SCREENS.forEach(([id,label,ic])=>{const t=document.createElement('button');t.type='button';t.role='tab';t.id='gt-'+id;t.dataset.nav=id;t.textContent=label;t.onclick=()=>nav(id);t.onkeydown=e=>{const i=SCREENS.findIndex(x=>x[0]===id),d=e.key==='ArrowRight'?1:e.key==='ArrowLeft'?-1:0;if(d){const n=SCREENS[(i+d+SCREENS.length)%SCREENS.length][0];nav(n);$('#gt-'+n).focus();e.preventDefault()}};tabs.appendChild(t);
@@ -3430,11 +3744,8 @@ sideTab=1;
  addEventListener('resize',()=>{if(navOpen&&innerWidth>760)setDrawer(false)});
 })();
 function setDrawer(o){if(o&&document.querySelector('.modal:not(.hide):not(#timeoutm),.gmodal.open'))o=false;navOpen=!!o;const d=$('#gdrawer');d.classList.toggle('open',navOpen);d.setAttribute('aria-hidden',String(!navOpen));$('#gscrim').classList.toggle('hide',!navOpen);$('#gburger').setAttribute('aria-expanded',String(navOpen));$('#gburger').setAttribute('aria-label',navOpen?'Close navigation menu':'Open navigation menu');if(navOpen)d.querySelector('.gi[aria-current=page]')?.focus()}
-function applyScreen(){const app=document.querySelector('.app');app.dataset.screen=activeScreen;document.querySelectorAll('[data-screen]').forEach(e=>e.classList.toggle('hide',e.dataset.screen!==activeScreen));
- app.classList.toggle('sp',activeScreen==='play');app.classList.toggle('sc',activeScreen==='coaching');app.classList.toggle('sg',['games','stats','roster','settings'].includes(activeScreen));
- document.querySelectorAll('.gtabs [data-nav]').forEach(b=>{const on=b.dataset.nav===activeScreen;b.setAttribute('aria-selected',on);b.tabIndex=on?0:-1});
- document.querySelectorAll('.gdrawer [data-nav]').forEach(b=>{if(b.dataset.nav===activeScreen)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
- $('#gcur').textContent=SCREENS.find(x=>x[0]===activeScreen)[1]}
+function applyScreen(){const app=document.querySelector('.app'),sit=document.getElementById('situPanel'),log=document.getElementById('liveLogPanel'),main=document.querySelector('main'),coachPanel=document.getElementById('coachPanel'),rotPanel=document.getElementById('rot')?.closest('section'),legacySides=document.getElementById('legacySides'),cdPanel=document.getElementById('cdPanel'),coachAside=document.querySelector('.app>aside');let stack=document.getElementById('situStack');if(!stack){stack=document.createElement('div');stack.id='situStack';stack.className='situ-stack'}if(coachPanel&&main&&rotPanel){if(activeScreen==='coaching'){if(coachPanel.parentElement!==main)main.insertBefore(coachPanel,rotPanel)}else if(legacySides&&coachPanel.parentElement!==legacySides.parentElement){legacySides.parentElement.insertBefore(coachPanel,legacySides)}}if(activeScreen==='play'){const playCol=document.getElementById('playCol'),playSide=document.getElementById('playSide');if(log){stack.append(log);if(stack.parentElement!==app)app.insertBefore(stack,app.firstElementChild)}if(playSide&&playCol&&playSide.parentElement!==stack)stack.appendChild(playSide);if(sit&&playCol&&sit.parentElement!==playCol)playCol.insertBefore(sit,playCol.firstChild)}else{if(sit){if(activeScreen==='coaching'&&coachAside){coachAside.appendChild(sit)}else{if(stack.contains(sit))main?.appendChild(sit);else if(sit.parentElement!==main)main?.appendChild(sit)}}const playCol=document.getElementById('playCol'),playSide=document.getElementById('playSide');if(playSide&&playCol&&playSide.parentElement!==playCol)playCol.insertBefore(playSide,playCol.firstChild);if(log&&stack.contains(log))app.appendChild(log);if(stack.parentElement)stack.remove()}if(cdPanel){if(activeScreen==='coaching'&&coachPanel&&main){if(cdPanel.parentElement!==main||cdPanel.previousElementSibling!==coachPanel)coachPanel.insertAdjacentElement('afterend',cdPanel)}else if(coachAside&&cdPanel.parentElement!==coachAside)coachAside.appendChild(cdPanel)}app.dataset.screen=activeScreen;if(activeScreen==='coaching'&&cdPanel&&coachPanel){requestAnimationFrame(()=>{cdPanel.style.height=coachPanel.offsetHeight+'px';cdPanel.style.overflowY='auto'})}document.querySelectorAll('[data-screen]').forEach(e=>e.classList.toggle('hide',e.dataset.screen!==activeScreen));app.classList.toggle('sp',activeScreen==='play');app.classList.toggle('sc',activeScreen==='coaching');app.classList.toggle('sg',['games','stats','roster','settings'].includes(activeScreen));document.querySelectorAll('.gtabs [data-nav]').forEach(b=>{const on=b.dataset.nav===activeScreen;b.setAttribute('aria-selected',on);b.tabIndex=on?0:-1});document.querySelectorAll('.gdrawer [data-nav]').forEach(b=>{if(b.dataset.nav===activeScreen)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});$('#gcur').textContent=SCREENS.find(x=>x[0]===activeScreen)[1]}
+addEventListener('resize',()=>{const cp=document.getElementById('coachPanel'),dp=document.getElementById('cdPanel');if(document.querySelector('.app.sc')&&cp&&dp){dp.style.height=cp.offsetHeight+'px';dp.style.overflowY='auto'}});
 function nav(sc){if(!SCREENS.some(x=>x[0]===sc))return;if(document.body.classList.contains('setonly')&&sc!=='settings')return;if(QK.on&&!QK_TABS.includes(sc))return;{const tm=document.getElementById('timeoutm');if(tm&&!tm.classList.contains('hide')){if(sc==='play')return;/* timeout popup is non-blocking: leaving the Play tab keeps the timeout open for coaching; coming back re-opens the popup with a Play button */tm.classList.add('hide');if(typeof G!=='undefined'&&G){G.hold=true;paused=true;G.coachTO=true;G.subOK=true,ftUnlock()}}}if(document.querySelector('.modal:not(.hide):not(#timeoutm),.gmodal.open'))return;const returningFromCoachTimeout=sc==='play'&&typeof G!=='undefined'&&G.coachTO;if(returningFromCoachTimeout){G.subOK=true,ftUnlock();applyPlan(T[0])}activeScreen=sc;if(sc==='play')prepPost();sideTab=sc==='play'?0:1;setDrawer(false);applyScreen();XS.v++;if(typeof T!=='undefined'&&T)ui();if(sc==='play')fit();if(returningFromCoachTimeout){const m=$('#timeoutm');if(m){$('#timeoutTitle').textContent='Timeout';$('#timeoutBody').textContent='Make any final adjustments, then press Play to resume the game.';$('#timeoutCoach').classList.add('hide');$('#timeoutResume').textContent='Play';m.classList.remove('hide')}}}
 function gamesScreen(){if(!SZ)return'<div class="dim">Start a season first.</div>';
  let h=vnavHTML('g');const bk=gameView()==='bracket';h+=postCtl(bk?'bracket':'list')+(!bk&&SZ.gi>=SZ.sched.length?`<div class="dim" style="margin-bottom:8px">${postStatus()}</div>`:'');
@@ -3547,7 +3858,201 @@ function zeSync(){const box=$('#zoneEd');if(!box||typeof T==='undefined'||!T||!T
  const end=e=>{if(!ZE.drag)return;const d=ZE.drag;ZE.drag=null;zeCommit(d.c);zeRender()};svg.addEventListener('pointerup',end);svg.addEventListener('pointercancel',end);
  $('#zeReset').onclick=()=>{delete ZRC[T[0].def];try{localStorage.setItem(ZRC_KEY,JSON.stringify(ZRC))}catch(e){}zeRender()};
  setInterval(()=>{try{zeSync()}catch(e){}},1500)})();
+
+/* Keep Play panels matched to the requested reference panels as layout/content changes. */
+(function(){
+  function syncRequestedPanelSizes(){
+    const app=document.querySelector('.app');
+    if(!app)return;
+    const log=document.getElementById('liveLogPanel');
+    const situations=document.getElementById('situPanel');
+    const team=document.getElementById('teamPanel');
+    const onCourt=document.getElementById('playSide');
+    if(app.classList.contains('sp')){
+      if(log&&situations){
+        const h=Math.ceil(situations.getBoundingClientRect().height);
+        if(h>0){log.style.setProperty('height',h+'px','important');log.style.setProperty('min-height',h+'px','important');log.style.setProperty('max-height',h+'px','important');log.style.setProperty('flex-basis',h+'px','important');}
+      }
+      if(team&&onCourt){
+        team.style.setProperty('height','auto','important');
+        team.style.setProperty('min-height','0','important');
+        team.style.setProperty('max-height','none','important');
+        const h=Math.ceil(team.getBoundingClientRect().height);
+        if(h>0){onCourt.style.setProperty('height',h+'px','important');onCourt.style.setProperty('min-height',h+'px','important');onCourt.style.setProperty('max-height',h+'px','important');}
+      }
+    }
+    if(app.classList.contains('sc')){
+      const header=document.querySelector('.app.sc>main .rh span:nth-child(2)');
+      if(header&&header.textContent.trim()!=='On Court')header.textContent='On Court';
+    }
+  }
+  window.addEventListener('resize',syncRequestedPanelSizes);
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',syncRequestedPanelSizes);
+  setInterval(syncRequestedPanelSizes,500);
+  requestAnimationFrame(syncRequestedPanelSizes);
+})();
 </script>
 
 </body>
 </html>
+
+<style id="user-final-oncourt-adjustments">
+/* On-court box score: fit all five players without an internal scrollbar and omit position labels. */
+#playSide,#playSide #side0,#playSide #courtbox{overflow:visible!important;max-height:none!important;height:auto!important;min-height:0!important}
+#playSide #courtbox .pos{display:none!important}
+#playSide #courtbox .oc td.l{white-space:nowrap!important}
+</style>
+
+<style id="user-final-oncourt-panel-fit">
+/* Center the Full control and let the on-court box score use the entire panel. */
+#playSide .ph{position:relative!important;display:flex!important;align-items:center!important;justify-content:center!important;text-align:center!important;min-height:30px!important}
+#playSide .ph h2{width:100%!important;text-align:center!important;margin:0 auto!important}
+#playSide .ph #fbBtn{position:absolute!important;left:50%!important;transform:translateX(-50%)!important;top:100%!important;margin-top:2px!important;z-index:2!important;text-align:center!important}
+#playSide #courtbox{width:100%!important;max-width:none!important;box-sizing:border-box!important;overflow:visible!important}
+#playSide #courtbox .court-pair,#playSide #courtbox .court-pair table,#playSide #courtbox table{width:100%!important;max-width:none!important;box-sizing:border-box!important}
+#playSide #courtbox .court-pair table{table-layout:fixed!important}
+#playSide{overflow:hidden!important}
+</style>
+
+<style id="coaching-defaults-compact-layout">
+/* Keep Coaching Defaults controls in place without a scrolling card; compact the buttons to fit. */
+.app.sc #cdPanel{overflow:visible!important;overflow-y:visible!important;overflow-x:visible!important;min-height:0!important;box-sizing:border-box!important;padding:10px!important}
+.app.sc #cdPanel .bar{display:flex!important;align-items:center!important;justify-content:flex-start!important;flex-wrap:nowrap!important;gap:6px!important;margin-top:6px!important;overflow:visible!important;white-space:normal!important;padding:0!important}
+.app.sc #cdPanel .bar button{flex:1 1 0!important;min-width:0!important;width:auto!important;padding:5px 7px!important;font-size:10px!important;line-height:1.15!important;min-height:26px!important;white-space:normal!important}
+.app.sc #cdPanel #coachDefMsg{font-size:10px!important;line-height:1.2!important;margin-top:4px!important}
+</style>
+
+<style id="user-box-score-icon-button">
+/* Replace the text Full control with a compact theme-matched circular icon. */
+#playSide .ph #fbBtn{
+  width:28px!important;
+  height:28px!important;
+  min-width:28px!important;
+  min-height:28px!important;
+  padding:0!important;
+  border-radius:50%!important;
+  border:1px solid var(--gold,#f5d21b)!important;
+  background:var(--gold,#f5d21b)!important;
+  color:#11151b!important;
+  font-size:0!important;
+  line-height:1!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  box-shadow:none!important;
+}
+#playSide .ph #fbBtn:after{
+  content:"⤢"!important;
+  display:block!important;
+  font-family:Arial,sans-serif!important;
+  font-size:20px!important;
+  font-weight:900!important;
+  line-height:1!important;
+  color:#11151b!important;
+}
+#playSide .ph #fbBtn:hover{filter:brightness(1.08)!important}
+</style>
+
+<style id="user-boxscore-title-and-fit-polish">
+/* Box-score modal: keep the team count beneath the team name. */
+#fbm .fbh{position:relative!important;min-height:48px!important}
+#fbm .fbh h2{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;line-height:1.1!important;gap:4px!important}
+#fbm .fbh h2 .fb-team-count{display:block!important;font-size:12px!important;line-height:1!important;color:var(--muted,#9ca3af)!important;font-weight:700!important}
+#fbm #tab table caption{font-size:22px!important}
+/* Full-size on-court tables: use available panel width and distribute columns evenly. */
+#playSide #courtbox .court-pair{display:flex!important;flex-direction:column!important;width:100%!important;gap:10px!important}
+#playSide #courtbox .court-pair table{width:100%!important;table-layout:fixed!important}
+#playSide #courtbox .court-pair th,#playSide #courtbox .court-pair td{padding:5px 4px!important;font-size:11px!important}
+#playSide #courtbox .court-pair th.l,#playSide #courtbox .court-pair td.l{width:40%!important;text-align:left!important}
+/* Match the maximize icon to the Auto Sub control and pin it to the panel's upper-right corner. */
+#playSide .ph #fbBtn{top:0!important;right:0!important;left:auto!important;transform:none!important;background:#242a35!important;border:1px solid #242a35!important;color:#fff!important}
+#playSide .ph #fbBtn:after{color:#fff!important}
+/* All close controls use a simple X, without the word Close. */
+#fbClose,#gmx,#gclose,#slClose,#champx,#rmx,[aria-label*="Close"]{font-size:0!important;min-width:28px!important;width:28px!important;height:28px!important;padding:0!important;display:inline-flex!important;align-items:center!important;justify-content:center!important}
+#fbClose:after,#gmx:after,#gclose:after,#slClose:after,#champx:after,#rmx:after,[aria-label*="Close"]:after{content:"X"!important;font-size:13px!important;font-weight:900!important;line-height:1!important}
+</style>
+
+<style id="user-boxscore-final-polish-20261022">
+/* Keep the maximize icon precisely centered inside its button. */
+#playSide .ph #fbBtn{display:flex!important;align-items:center!important;justify-content:center!important;text-align:center!important;line-height:1!important;padding:0!important}
+#playSide .ph #fbBtn:after{position:absolute!important;inset:0!important;display:flex!important;align-items:center!important;justify-content:center!important;text-align:center!important;line-height:1!important;margin:0!important;padding:0!important}
+/* Remove the team-name caption and its white banner from the Play tab Full Box Score. */
+#fbm #tab table caption{display:none!important;height:0!important;padding:0!important;margin:0!important;border:0!important;background:transparent!important}
+</style>
+
+<style id="match-oncourt-teamstats-header-size-20261022">
+/* Match the On-Court Box Score title row to the Total Team Stats header dimensions. */
+#playSide .ph{
+  box-sizing:border-box!important;
+  height:34px!important;
+  min-height:34px!important;
+  max-height:34px!important;
+  margin:0 0 6px!important;
+  padding:0!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+}
+#playSide .ph h2{
+  font-size:16px!important;
+  line-height:1!important;
+  margin:0!important;
+  padding:0!important;
+}
+#playSide .ph #fbBtn{
+  top:50%!important;
+  right:0!important;
+  transform:translateY(-50%)!important;
+}
+</style>
+
+<style id="playoffs-end-modal-polish-20261022">
+/* Playoffs Journey Ended modal: pin its X close control to the upper-right corner. */
+#endm .endc{position:relative!important;padding-top:38px!important}
+#endm #endx.modal-x{position:absolute!important;top:10px!important;right:10px!important;z-index:5!important;margin:0!important}
+/* Championship modal: X in the upper-right; no New Playoffs button; clean, centered title without gold accent styling. */
+#champm .endc{position:relative!important;padding-top:34px!important}
+#champm #champx.modal-x{position:absolute!important;top:10px!important;right:10px!important;z-index:5!important;margin:0!important}
+#champm #champh{width:100%!important;text-align:center!important;margin-left:auto!important;margin-right:auto!important;border:0!important;border-left:0!important;border-top:0!important;background:transparent!important;box-shadow:none!important;color:#fff!important;padding-left:0!important}
+#champm .endc>div:first-of-type{width:100%!important}
+</style>
+<style>
+/* Championship announcement: center the actual headline and remove its gold accent decoration. */
+#champm #champh{display:block!important;width:100%!important;text-align:center!important;margin:0 auto!important;padding:0!important;border:0!important;border-left:0!important;border-top:0!important;background:none!important;box-shadow:none!important;color:#fff!important;}
+#champm #champh::before,#champm #champh::after{content:none!important;display:none!important;border:0!important;background:none!important;box-shadow:none!important;}
+#champm .endc>div:first-of-type{display:flex!important;flex-direction:column!important;align-items:center!important;width:100%!important;}
+</style>
+
+<style id="play-boxscore-no-scroll-compact-header">
+/* Play tab: the on-court box score should grow to fit its rows, not scroll internally. */
+.app.sp>.situ-stack>#playSide{
+  height:auto!important;
+  min-height:0!important;
+  max-height:none!important;
+  overflow:visible!important;
+  overflow-y:visible!important;
+  overflow-x:visible!important;
+  padding-top:8px!important;
+}
+.app.sp>.situ-stack>#playSide #side0,
+.app.sp>.situ-stack>#playSide #courtbox,
+.app.sp>.situ-stack>#playSide #courtbox .court-pair,
+.app.sp>.situ-stack>#playSide #courtbox table{
+  height:auto!important;
+  min-height:0!important;
+  max-height:none!important;
+  overflow:visible!important;
+  overflow-y:visible!important;
+}
+.app.sp>.situ-stack>#playSide .ph{
+  margin-top:0!important;
+  margin-bottom:2px!important;
+}
+.app.sp>.situ-stack>#playSide #courtbox{
+  margin-top:0!important;
+  padding-top:0!important;
+}
+.app.sp>.situ-stack>#playSide #courtbox .court-pair{
+  margin-top:2px!important;
+}
+</style>
